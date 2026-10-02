@@ -2,8 +2,9 @@
 // is extruded from the traced silhouette in standShape.js (body, hooked top
 // insert, logo panels front and back), lit by one top-left key light with a
 // soft contact shadow. Scroll drives it: it starts on the right showing its
-// front, and as the page scrolls it turns to its other face while sliding left
-// to make room for the story text. Loaded lazily so the page paints first.
+// front (and, stood on end, only its upper half), and as the page scrolls it
+// turns to its other face while sliding left and panning to its lower half,
+// making room for the story text. Loaded lazily so the page paints first.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
@@ -58,12 +59,23 @@ function layoutFor({ width, height }, pose) {
   const w = pose === 'vertical' ? MODEL_H : MODEL_W;
   const h = pose === 'vertical' ? MODEL_W : MODEL_H;
   if (width < 760) {
-    const viewH = Math.max(h / 0.32, w / (0.84 * aspect));
-    return { z: viewH / 2 / TAN, x0: 0, x1: 0, y: viewH * 0.2, floor: viewH * 0.2 - h / 2 };
+    // phones: the stand holds the top of the screen and the copy runs underneath
+    const viewH = Math.max(h / (pose === 'vertical' ? 0.42 : 0.32), w / (0.84 * aspect));
+    const y = viewH * 0.2;
+    return { z: viewH / 2 / TAN, x0: 0, x1: 0, y0: y, y1: y, floor: y - h / 2 };
   }
-  const viewH = Math.max(h / (pose === 'vertical' ? 0.78 : 0.6), w / (0.42 * aspect));
+  if (pose === 'vertical') {
+    // Stood on end and larger than the screen: the hero shows its upper half,
+    // the story its lower half, and the scroll pans from one to the other.
+    const viewH = Math.max(h / 1.45, w / (0.42 * aspect));
+    const viewW = viewH * aspect;
+    const y0 = viewH * 0.4 - h / 2; // top edge just under the nav
+    return { z: viewH / 2 / TAN, x0: viewW * 0.22, x1: -viewW * 0.22, y0, y1: -y0, floor: null };
+  }
+  const viewH = Math.max(h / 0.6, w / (0.42 * aspect));
   const viewW = viewH * aspect;
-  return { z: viewH / 2 / TAN, x0: viewW * 0.23, x1: -viewW * 0.23, y: -viewH * 0.02, floor: -viewH * 0.02 - h / 2 };
+  const y = -viewH * 0.02;
+  return { z: viewH / 2 / TAN, x0: viewW * 0.23, x1: -viewW * 0.23, y0: y, y1: y, floor: y - h / 2 };
 }
 
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -137,11 +149,11 @@ function Stand({ colorway, reducedMotion, interactive, progress, pose }) {
     const py = interactive && !reducedMotion ? state.pointer.y : 0;
 
     g.position.x = THREE.MathUtils.lerp(layout.x0, layout.x1, p);
-    g.position.y = layout.y + (1 - rise) * -1.2;
+    g.position.y = THREE.MathUtils.lerp(layout.y0, layout.y1, p) + (1 - rise) * -1.2;
     // front face (slightly towards the hero copy) → back face (towards the story)
     r.rotation.y = THREE.MathUtils.lerp(-0.42, Math.PI + 0.42, p) + (1 - rise) * -1 + sway + px * 0.18;
     r.rotation.x = THREE.MathUtils.damp(r.rotation.x, -py * 0.1, 4, dt);
-    if (shadow.current) {
+    if (shadow.current && layout.floor !== null) {
       shadow.current.position.x = g.position.x;
       shadow.current.position.y = layout.floor - 0.06;
     }
@@ -173,9 +185,12 @@ function Stand({ colorway, reducedMotion, interactive, progress, pose }) {
           </group>
         </group>
       </group>
-      <group ref={shadow}>
-        <ContactShadows opacity={pose === 'vertical' ? 0.45 : 0.7} scale={[9, 9]} blur={2.6} far={pose === 'vertical' ? 6.5 : 3} resolution={512} color="#000000" />
-      </group>
+      {/* a floor only exists when the whole stand is on screen */}
+      {layout.floor !== null && (
+        <group ref={shadow}>
+          <ContactShadows opacity={pose === 'vertical' ? 0.45 : 0.7} scale={[9, 9]} blur={2.6} far={pose === 'vertical' ? 6.5 : 3} resolution={512} color="#000000" />
+        </group>
+      )}
     </>
   );
 }
