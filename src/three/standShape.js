@@ -20,10 +20,10 @@ const sample = (fn, n) => Array.from({ length: n + 1 }, (_, i) => fn(i / n));
 // Right leg edges, t = 0 at the top, t = 1 at the foot.
 const SHOULDER = [84, 202];
 const FOOT_OUT = [300, 10];
-const FOOT_IN = [226, 0];
-const APEX = [0, 108];
+const FOOT_IN = [210, 0];
+const APEX = [0, 100];
 const outerEdge = (t) => quad(SHOULDER, [206, 138], FOOT_OUT, t);
-const innerEdge = (t) => cubic(APEX, [44, 106], [150, 50], FOOT_IN, t);
+const innerEdge = (t) => cubic(APEX, [40, 98], [136, 38], FOOT_IN, t);
 
 const NECK = 22; // half width of the neck under the T
 const BAR_LOW = 236; // underside of the T bar
@@ -54,18 +54,18 @@ export function bodyOutline() {
 
 /** The coloured insert on top of the T: a bar with rounded, slightly drooping ends. */
 export function capOutline() {
-  const r = (CAP_TOP - BAR_TOP) / 2;
-  const pts = [];
-  // right rounded end
-  for (let i = 0; i <= 10; i++) {
-    const a = -Math.PI / 2 + (Math.PI * i) / 10;
-    pts.push([BAR_HALF + 2 + Math.cos(a) * r, BAR_TOP + r + Math.sin(a) * r]);
-  }
-  for (let i = 0; i <= 10; i++) {
-    const a = Math.PI / 2 + (Math.PI * i) / 10;
-    pts.push([-BAR_HALF - 2 + Math.cos(a) * r, BAR_TOP + r + Math.sin(a) * r]);
-  }
-  return pts;
+  // a bar along the top whose ends hook down over the body's T, as in the photos
+  const right = [
+    [BAR_HALF - 8, CAP_TOP],
+    [BAR_HALF + 12, CAP_TOP - 6],
+    [BAR_HALF + 16, BAR_TOP - 4],
+    [BAR_HALF + 8, BAR_LOW + 2],
+    [BAR_HALF + 2, BAR_TOP - 2],
+    [BAR_HALF - 4, BAR_TOP + 4],
+  ];
+  const left = right.map(([x, y]) => [-x, y]).reverse();
+  // clockwise from the top-left: across the top, round the right hook, back along the underside
+  return [...left.slice(-1), ...right, ...left.slice(0, -1)];
 }
 
 function shrink(tri, d) {

@@ -10,7 +10,7 @@ import { useGSAP } from '@gsap/react';
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-export default function ScrollReveal({ children, as: Tag = 'p', className = '', baseOpacity = 0.14, blur = 4 }) {
+export default function ScrollReveal({ children, as: Tag = 'p', className = '', baseOpacity = 0.14, blur = 4, start = 'top 82%', end = 'bottom 45%' }) {
   const ref = useRef(null);
   const words = children.split(/(\s+)/);
 
@@ -26,7 +26,7 @@ export default function ScrollReveal({ children, as: Tag = 'p', className = '', 
           filter: 'blur(0px)',
           ease: 'none',
           stagger: 0.05,
-          scrollTrigger: { trigger: ref.current, start: 'top 82%', end: 'bottom 45%', scrub: true },
+          scrollTrigger: { trigger: ref.current, start, end, scrub: true, invalidateOnRefresh: true },
         }
       );
     },

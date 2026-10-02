@@ -145,44 +145,59 @@ main { overflow-x: clip; }
   .nav.is-open .nav__toggle span::before { top: 0; transform: rotate(-90deg); }
 }
 
-/* ── Hero: the stand in its cut-out ─────────────────── */
-.hero {
-  position: relative;
-  min-height: 100svh;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  padding: 104px var(--gutter) 32px;
-  gap: 8px;
-  isolation: isolate;
-}
-.hero::before {
+/* ── Story: the pinned 3D stand with two panels scrolling over it ── */
+.story { position: relative; isolation: isolate; }
+.story::before {
   /* the lid light: one warm key from top-left */
-  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  content: ''; position: absolute; inset: 0 0 auto; height: 100svh; z-index: -1; pointer-events: none;
   background: radial-gradient(70% 60% at 30% 10%, rgba(255, 244, 230, 0.07), transparent 70%);
 }
-.hero__copy { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 26rem); align-items: end; gap: 24px 48px; }
-.hero__title {
-  font-family: var(--display); font-weight: 900; text-transform: uppercase;
-  font-size: clamp(54px, 9vw, 96px); line-height: 0.86; letter-spacing: -0.01em;
-  max-width: 11ch;
-}
-.hero__lede { margin: 0 0 6px; color: var(--bone-2); font-size: 18px; max-width: 40ch; }
-
-.hero__stage { position: relative; min-height: 300px; }
-.recess, .stand3d { position: absolute; inset: 0; width: 100%; height: 100%; }
-.recess__rim { fill: none; stroke: rgba(242, 240, 235, 0.07); stroke-width: 34; stroke-linejoin: round; }
-.recess__cut { fill: var(--pit); stroke: var(--pit); stroke-width: 30; stroke-linejoin: round; }
-.stand3d { animation: stand-in 1.2s var(--ease) both; }
+.story__pin { position: sticky; top: 0; height: 100svh; z-index: 0; }
+.stand3d { position: absolute; inset: 0; animation: stand-in 1.2s var(--ease) both; }
 @keyframes stand-in { from { opacity: 0; } }
 
-.hero__foot { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 20px 32px; }
-.hero__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.panel {
+  position: relative; z-index: 1; min-height: 100svh;
+  display: flex; align-items: center;
+  padding: 112px var(--gutter) 72px;
+  pointer-events: none;
+}
+.panel--hero { margin-top: -100svh; }
+.panel__copy { pointer-events: auto; width: min(560px, 42%); }
+.panel--story .panel__copy { margin-left: auto; }
+
+.hero__title {
+  font-family: var(--display); font-weight: 900; text-transform: uppercase;
+  font-size: clamp(54px, 7.4vw, 96px); line-height: 0.86; letter-spacing: -0.01em;
+}
+.hero__lede { margin: 22px 0 30px; color: var(--bone-2); font-size: 18px; max-width: 40ch; }
+.hero__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+
+.scroll-cue {
+  position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); pointer-events: auto;
+  display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px;
+  color: var(--bone-2); text-decoration: none; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.scroll-cue:hover { color: var(--bone); }
+.scroll-cue svg { animation: cue 2s var(--ease) infinite; }
+@keyframes cue { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(3px); } }
+
+.story__title {
+  font-family: var(--display); font-weight: 900; text-transform: uppercase;
+  font-size: clamp(44px, 6vw, 80px); line-height: 0.9; color: var(--red-hot); margin-bottom: 24px;
+}
+.story__text {
+  margin: 0; font-family: var(--display); font-weight: 800; text-transform: uppercase;
+  font-size: clamp(30px, 3.4vw, 48px); line-height: 1.02;
+}
+.story__note { margin: 28px 0 0; color: var(--bone-2); max-width: 42ch; }
+.sr-word { display: inline-block; will-change: opacity, filter; }
 
 .swatches { border: 0; margin: 0; padding: 0; min-width: 0; }
 .swatches__legend { padding: 0; margin-bottom: 10px; color: var(--bone-2); font-size: 15px; }
 .swatches__legend strong { color: var(--bone); font-weight: 600; }
 .swatches__row {
-  display: flex; gap: 6px; padding: 6px; border-radius: 999px;
+  display: inline-flex; gap: 6px; padding: 6px; border-radius: 999px;
   background: var(--pit); box-shadow: var(--depth-1);
 }
 .swatch { position: relative; display: grid; place-items: center; width: 44px; height: 44px; cursor: pointer; }
@@ -197,23 +212,25 @@ main { overflow-x: clip; }
 .swatch input:checked + .swatch__chip { box-shadow: 0 0 0 2px var(--pit), 0 0 0 4px var(--bone); }
 .swatch input:focus-visible + .swatch__chip { outline: 2px solid var(--red-hot); outline-offset: 5px; }
 
-@media (max-width: 900px) {
-  .hero { min-height: auto; padding-top: 96px; }
-  .hero__copy { grid-template-columns: 1fr; }
-  .hero__lede { font-size: 16px; }
-  .hero__stage { min-height: 0; aspect-ratio: 3 / 2; margin: 0 calc(var(--gutter) * -1); }
+@media (max-width: 759px) {
+  /* phones: the stand holds the top of the screen, the copy runs underneath */
+  .panel { align-items: flex-end; padding: 0 var(--gutter) 40px; }
+  .panel--hero { padding-top: 46svh; }
+  .panel--story { padding-top: 46svh; }
+  .panel__copy { width: 100%; }
+  .panel--story .panel__copy {
+    padding: 24px; margin: 0 calc(var(--gutter) * -0.5);
+    background: rgba(14, 14, 14, 0.82); border-radius: var(--radius); backdrop-filter: blur(6px);
+  }
+  .hero__title { font-size: 50px; }
+  .hero__lede { font-size: 16px; margin: 14px 0 20px; }
+  .hero__actions { margin-top: 20px; }
+  .scroll-cue { display: none; }
 }
-
-/* ── Origin: one statement, revealed by scroll ──────── */
-.origin { padding: clamp(96px, 16vw, 200px) var(--gutter); max-width: 1180px; margin: 0 auto; }
-.origin__text {
-  margin: 0; font-family: var(--display); font-weight: 800; text-transform: uppercase;
-  font-size: clamp(34px, 5.4vw, 72px); line-height: 1; letter-spacing: 0;
-}
-.sr-word { display: inline-block; will-change: opacity, filter; }
+@media (prefers-reduced-motion: reduce) { .stand3d, .scroll-cue svg { animation: none; } }
 
 /* ── Details: a foam tray with cut-outs of different sizes ─── */
-.details { padding: 0 var(--gutter) clamp(96px, 12vw, 160px); max-width: 1280px; margin: 0 auto; }
+.details { padding: clamp(96px, 12vw, 160px) var(--gutter); max-width: 1280px; margin: 0 auto; }
 .details .section-title { margin-bottom: 40px; }
 .bento {
   display: grid; gap: 16px;

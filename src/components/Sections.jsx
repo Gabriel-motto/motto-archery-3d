@@ -1,22 +1,8 @@
-import ScrollReveal from './rb/ScrollReveal.jsx';
 import SpotlightCard from './rb/SpotlightCard.jsx';
 import TiltedCard from './rb/TiltedCard.jsx';
 import Magnet from './rb/Magnet.jsx';
 import FaqAccordion from './vg/FaqAccordion.jsx';
 import { COLORWAYS, CONTACT, DETAILS, FAQ, HAS_CONTACT, STEPS, img, orderHref, srcSet } from '../data.js';
-
-export function Origin() {
-  return (
-    <section className="origin" id="origen" aria-labelledby="origen-title">
-      <h2 id="origen-title" className="sr-only">
-        Origen
-      </h2>
-      <ScrollReveal className="origin__text">
-        No salió de un catálogo. Lo diseñó un arquero de poleas, después de muchos años compitiendo, para apoyar su propio arco entre tandas. Luego se lo pidieron los de su línea.
-      </ScrollReveal>
-    </section>
-  );
-}
 
 export function Details() {
   return (

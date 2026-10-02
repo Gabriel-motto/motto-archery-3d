@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Nav from './components/Nav.jsx';
 import Hero from './components/Hero.jsx';
-import { Colours, Details, Order, Origin } from './components/Sections.jsx';
+import { Colours, Details, Order } from './components/Sections.jsx';
 import Footer from './components/Footer.jsx';
 import { COLORWAYS } from './data.js';
 
@@ -23,7 +23,6 @@ export default function App() {
       <Nav />
       <Hero colorway={colorway} onColorway={setColorway} />
       <main id="main">
-        <Origin />
         <Details />
         <Colours onPreview={preview} />
         <Order colorway={colorway} />
