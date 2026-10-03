@@ -9,7 +9,7 @@
   border-bottom: 1px solid var(--line);
   transition: background-color 0.3s var(--ease);
 }
-.faq-acc__item.is-open { background: rgba(242, 240, 235, 0.03); }
+.faq-acc__item.is-open { background: rgb(var(--bone-rgb) / 0.03); }
 .faq-acc__heading { margin: 0; font-size: inherit; }
 .faq-acc__button {
   width: 100%;

@@ -78,7 +78,7 @@ export default function Hero({ colorway, onColorway, variant, onVariant }) {
         </div>
       </div>
 
-      <header className="panel panel--hero" id="inicio">
+      <header className="panel panel--hero" id="inicio" tabIndex={-1}>
         <div className="panel__copy">
           <SplitText as="h1" className="hero__title" text="Nació en la línea de tiro." delay={0.15} />
           <p className="hero__lede">

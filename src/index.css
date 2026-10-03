@@ -2,6 +2,19 @@
    case: charcoal die-cut foam, every block a recess cut for one thing.
    Depth is rank: the deeper the recess (--depth-*), the more it matters. */
 
+/* Local fonts scaled to the web fonts' widths (measured), so the text keeps
+   its line breaks when the web fonts arrive: no layout shift on load. */
+@font-face {
+  font-family: 'Display Fallback';
+  src: local('Arial Bold'), local('Arial'), local('Roboto'), local('Helvetica Neue'), local('Helvetica');
+  size-adjust: 62%;
+}
+@font-face {
+  font-family: 'Body Fallback';
+  src: local('Arial'), local('Roboto'), local('Helvetica Neue'), local('Helvetica');
+  size-adjust: 105%;
+}
+
 :root {
   --foam: #141414;
   --foam-up: #1b1b1b;
@@ -10,20 +23,29 @@
   --bone-2: #bdb8af;
   --red: #e10b0b;
   --red-hot: #ff4a3d; /* red for small text on foam (AA) */
-  --line: rgba(242, 240, 235, 0.1);
+  --red-hover: #f01616;
+  --on-red: #fff;
+  --scrollbar: #3a3a3a;
+  /* the same colours as channels, for translucent uses: rgb(var(--foam-rgb) / 0.9) */
+  --foam-rgb: 14 14 14;
+  --bone-rgb: 242 240 235;
+  --red-rgb: 225 11 11;
+  --shadow-rgb: 0 0 0;
+  --lamp-rgb: 255 244 230;
+  --line: rgb(var(--bone-rgb) / 0.1);
 
-  --display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
-  --body: 'Schibsted Grotesk', system-ui, sans-serif;
+  --display: 'Big Shoulders Display', 'Display Fallback', sans-serif;
+  --body: 'Schibsted Grotesk', 'Body Fallback', system-ui, sans-serif;
 
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --radius: 18px;
   --plate: #eeeeec;
   --gutter: clamp(16px, 4vw, 56px);
 
-  --depth-1: inset 0 3px 6px rgba(0, 0, 0, 0.55), inset 0 -1px 0 rgba(255, 255, 255, 0.03);
-  --depth-2: inset 0 8px 16px rgba(0, 0, 0, 0.7), inset 0 -1px 0 rgba(255, 255, 255, 0.04);
-  --depth-3: inset -4px 16px 30px rgba(0, 0, 0, 0.85), inset 0 -1px 0 rgba(255, 255, 255, 0.05);
-  --lift: 0 22px 36px -18px rgba(0, 0, 0, 0.9), 0 2px 4px rgba(0, 0, 0, 0.5);
+  --depth-1: inset 0 3px 6px rgb(var(--shadow-rgb) / 0.55), inset 0 -1px 0 rgb(var(--bone-rgb) / 0.03);
+  --depth-2: inset 0 8px 16px rgb(var(--shadow-rgb) / 0.7), inset 0 -1px 0 rgb(var(--bone-rgb) / 0.04);
+  --depth-3: inset -4px 16px 30px rgb(var(--shadow-rgb) / 0.85), inset 0 -1px 0 rgb(var(--bone-rgb) / 0.05);
+  --lift: 0 22px 36px -18px rgb(var(--shadow-rgb) / 0.9), 0 2px 4px rgb(var(--shadow-rgb) / 0.5);
 
   color-scheme: dark;
   accent-color: var(--red);
@@ -33,7 +55,7 @@
 *::before,
 *::after { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; scroll-padding-top: 96px; scrollbar-color: #3a3a3a var(--foam); }
+html { scroll-behavior: smooth; scroll-padding-top: 96px; scrollbar-color: var(--scrollbar) var(--foam); }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
 body {
@@ -48,7 +70,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-::selection { background: var(--red); color: #fff; }
+::selection { background: var(--red); color: var(--on-red); }
 img { max-width: 100%; display: block; }
 a { color: inherit; text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
 :focus-visible { outline: 2px solid var(--red-hot); outline-offset: 3px; border-radius: 4px; }
@@ -75,11 +97,11 @@ main { overflow-x: clip; }
   transition: background-color 0.25s var(--ease), box-shadow 0.25s var(--ease), color 0.25s var(--ease);
 }
 .btn--red {
-  background: var(--red); color: #fff;
-  box-shadow: 0 10px 24px -10px rgba(225, 11, 11, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  background: var(--red); color: var(--on-red);
+  box-shadow: 0 10px 24px -10px rgb(var(--red-rgb) / 0.7), inset 0 1px 0 rgb(var(--bone-rgb) / 0.25);
 }
-.btn--red:hover { background: #f01616; box-shadow: 0 16px 30px -10px rgba(225, 11, 11, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
-.btn--ghost { color: var(--bone); box-shadow: inset 0 0 0 1px rgba(242, 240, 235, 0.28); }
+.btn--red:hover { background: var(--red-hover); box-shadow: 0 16px 30px -10px rgb(var(--red-rgb) / 0.8), inset 0 1px 0 rgb(var(--bone-rgb) / 0.3); }
+.btn--ghost { color: var(--bone); box-shadow: inset 0 0 0 1px rgb(var(--bone-rgb) / 0.28); }
 .btn--ghost:hover { box-shadow: inset 0 0 0 1px var(--bone); }
 .btn--sm { min-height: 44px; padding: 0 18px; font-size: 16px; }
 .btn--lg { min-height: 64px; padding: 0 36px; font-size: 22px; }
@@ -102,12 +124,12 @@ main { overflow-x: clip; }
   width: min(1080px, calc(100% - 24px));
   display: flex; align-items: center; gap: 20px;
   padding: 8px 8px 8px 20px; border-radius: 999px;
-  background: rgba(20, 20, 20, 0.55);
+  background: rgb(var(--foam-rgb) / 0.55);
   backdrop-filter: blur(14px) saturate(1.2);
   box-shadow: inset 0 0 0 1px var(--line);
   transition: background-color 0.3s var(--ease), box-shadow 0.3s var(--ease);
 }
-.nav.is-scrolled { background: rgba(14, 14, 14, 0.92); box-shadow: inset 0 0 0 1px var(--line), var(--lift); }
+.nav.is-scrolled { background: rgb(var(--foam-rgb) / 0.92); box-shadow: inset 0 0 0 1px var(--line), var(--lift); }
 .nav { transition: background-color 0.3s var(--ease), box-shadow 0.3s var(--ease), transform 0.45s var(--ease); }
 .nav.is-hidden:not(:focus-within) { transform: translate(-50%, calc(-100% - 24px)); }
 .nav__brand { display: inline-flex; align-items: center; min-height: 44px; }
@@ -118,7 +140,7 @@ main { overflow-x: clip; }
   text-decoration: none; font-weight: 500; font-size: 15px; color: var(--bone-2);
   transition: color 0.2s, background-color 0.2s;
 }
-.nav__links a:hover { color: var(--bone); background: rgba(242, 240, 235, 0.06); }
+.nav__links a:hover { color: var(--bone); background: rgb(var(--bone-rgb) / 0.06); }
 .nav__toggle { display: none; }
 
 @media (max-width: 760px) {
@@ -126,7 +148,7 @@ main { overflow-x: clip; }
   .nav__links {
     position: absolute; top: calc(100% + 8px); left: 0; right: 0; margin: 0;
     flex-direction: column; padding: 8px; border-radius: 22px;
-    background: rgba(14, 14, 14, 0.97); box-shadow: inset 0 0 0 1px var(--line), var(--lift);
+    background: rgb(var(--foam-rgb) / 0.97); box-shadow: inset 0 0 0 1px var(--line), var(--lift);
     opacity: 0; visibility: hidden; transform: translateY(-6px);
     transition: opacity 0.25s var(--ease), transform 0.25s var(--ease), visibility 0.25s;
   }
@@ -135,7 +157,7 @@ main { overflow-x: clip; }
   .nav__cta { margin-left: auto; }
   .nav__toggle {
     display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%;
-    border: 0; background: rgba(242, 240, 235, 0.08); cursor: pointer; color: var(--bone);
+    border: 0; background: rgb(var(--bone-rgb) / 0.08); cursor: pointer; color: var(--bone);
   }
   .nav__toggle span, .nav__toggle span::before {
     display: block; width: 18px; height: 2px; background: currentColor; position: relative;
@@ -152,7 +174,7 @@ main { overflow-x: clip; }
 .story::before {
   /* the lid light: one warm key from top-left */
   content: ''; position: absolute; inset: 0 0 auto; height: 100svh; z-index: -1; pointer-events: none;
-  background: radial-gradient(70% 60% at 30% 10%, rgba(255, 244, 230, 0.07), transparent 70%);
+  background: radial-gradient(70% 60% at 30% 10%, rgb(var(--lamp-rgb) / 0.07), transparent 70%);
 }
 .story__pin { position: sticky; top: 0; height: 100svh; z-index: 0; }
 .stand3d { position: absolute; inset: 0; animation: stand-in 1.2s var(--ease) both; }
@@ -207,12 +229,12 @@ main { overflow-x: clip; }
 }
 .anatomy { position: absolute; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
 .anatomy__lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.anatomy__lines line { stroke: rgba(242, 240, 235, 0.55); stroke-width: 1; opacity: 0; }
+.anatomy__lines line { stroke: rgb(var(--bone-rgb) / 0.55); stroke-width: 1; opacity: 0; }
 .anatomy__marker {
   position: absolute; left: 0; top: 0; opacity: 0;
   display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
   background: var(--bone); color: var(--foam); font: 800 14px/1 var(--display);
-  box-shadow: 0 0 0 4px rgba(242, 240, 235, 0.18), 0 6px 14px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 0 4px rgb(var(--bone-rgb) / 0.18), 0 6px 14px rgb(var(--shadow-rgb) / 0.6);
 }
 .anatomy__label {
   position: absolute; left: 0; top: 0; opacity: 0; width: max-content; max-width: 230px;
@@ -235,7 +257,7 @@ main { overflow-x: clip; }
 .swatch__chip {
   width: 30px; height: 30px; border-radius: 50%;
   background: linear-gradient(135deg, var(--body) 0 58%, var(--cap) 58% 100%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), 0 2px 4px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 0 1px rgb(var(--bone-rgb) / 0.18), 0 2px 4px rgb(var(--shadow-rgb) / 0.5);
   transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
 }
 .swatch:hover .swatch__chip { transform: scale(1.08); }
@@ -250,13 +272,13 @@ main { overflow-x: clip; }
   .panel__copy { width: 100%; }
   .panel--story .panel__copy {
     padding: 24px; margin: 0 calc(var(--gutter) * -0.5);
-    background: rgba(14, 14, 14, 0.82); border-radius: var(--radius); backdrop-filter: blur(6px);
+    background: rgb(var(--foam-rgb) / 0.82); border-radius: var(--radius); backdrop-filter: blur(6px);
   }
   .hero__title { font-size: 50px; }
   .panel--anatomy { min-height: 160svh; padding-top: 52svh; }
   .panel--anatomy .panel__copy {
     position: sticky; top: auto; bottom: 96px; padding: 20px 22px; margin: 0 calc(var(--gutter) * -0.5);
-    background: rgba(14, 14, 14, 0.86); border-radius: var(--radius); backdrop-filter: blur(6px);
+    background: rgb(var(--foam-rgb) / 0.86); border-radius: var(--radius); backdrop-filter: blur(6px);
   }
   .anatomy__title { font-size: 40px; margin-bottom: 12px; }
   .anatomy__label, .anatomy__lines { display: none; }
@@ -327,7 +349,7 @@ main { overflow-x: clip; }
 .colour__chip {
   width: 16px; height: 16px; border-radius: 50%; flex: none;
   background: linear-gradient(135deg, var(--body) 0 58%, var(--cap) 58% 100%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 0 0 1px rgb(var(--bone-rgb) / 0.2);
 }
 @media (max-width: 900px) {
   .colours__tray {
@@ -390,7 +412,7 @@ main { overflow-x: clip; }
 }
 .miss__brand { position: absolute; top: 24px; left: var(--gutter); }
 .miss__brand img { height: 34px; width: auto; }
-.miss__target { width: min(320px, 70vw); overflow: visible; filter: drop-shadow(0 24px 30px rgba(0, 0, 0, 0.7)); }
+.miss__target { width: min(320px, 70vw); overflow: visible; filter: drop-shadow(0 24px 30px rgb(var(--shadow-rgb) / 0.7)); }
 .miss__arrow { animation: thunk 0.6s var(--ease) 0.3s both; }
 @keyframes thunk { from { transform: translate(190px, -170px) rotate(38deg); } }
 .miss__title { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: clamp(52px, 9vw, 96px); line-height: 0.9; margin-top: 12px; }
@@ -408,7 +430,7 @@ main { overflow-x: clip; }
     position: fixed; z-index: 40; left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom));
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     padding: 8px 8px 8px 16px; border-radius: 999px;
-    background: rgba(14, 14, 14, 0.94); box-shadow: inset 0 0 0 1px var(--line), var(--lift);
+    background: rgb(var(--foam-rgb) / 0.94); box-shadow: inset 0 0 0 1px var(--line), var(--lift);
     transform: translateY(calc(100% + 24px)); transition: transform 0.45s var(--ease);
   }
   .order-bar.is-shown { transform: none; }
@@ -426,7 +448,7 @@ main { overflow-x: clip; }
 .vswitch__thumb {
   position: absolute; z-index: -1; top: 5px; bottom: 5px; left: 5px;
   width: calc((100% - 10px) / var(--n)); border-radius: 999px;
-  background: var(--bone); box-shadow: 0 6px 14px -6px rgba(0, 0, 0, 0.8);
+  background: var(--bone); box-shadow: 0 6px 14px -6px rgb(var(--shadow-rgb) / 0.8);
   transform: translateX(calc(var(--i) * 100%));
   transition: transform 0.5s var(--ease);
 }
@@ -448,3 +470,6 @@ main { overflow-x: clip; }
   .colours__aside { justify-items: start; }
   .hero__switch { margin-bottom: 16px; }
 }
+
+/* the hero takes focus after "Verlo en 3D" only to move the reading position */
+#inicio:focus { outline: none; }

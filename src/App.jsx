@@ -9,12 +9,23 @@ import { COLORWAYS, VARIANTS } from './data.js';
 export default function App() {
   const [colorway, setColorway] = useState(COLORWAYS[0].id);
   const [variant, setVariant] = useState(VARIANTS[0].id);
+  // one short message for screen readers instead of re-reading whole sections
+  const [status, setStatus] = useState('');
 
-  // "Verlo en 3D" from the colour tray: switch the model, go back up to it
+  const changeVariant = (id) => {
+    setVariant(id);
+    setStatus(`Mostrando el modelo ${VARIANTS.find((v) => v.id === id).name.toLowerCase()}`);
+  };
+
+  // "Verlo en 3D" from the colour tray: switch the colour, go back up to the
+  // stand, and take keyboard focus there too so it isn't left behind
   const preview = (id) => {
     setColorway(id);
+    setStatus(`Viendo en 3D: ${COLORWAYS.find((c) => c.id === id).name.toLowerCase()}`);
     const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    document.getElementById('inicio').scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+    const hero = document.getElementById('inicio');
+    hero.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+    hero.focus({ preventScroll: true });
   };
 
   return (
@@ -23,14 +34,17 @@ export default function App() {
         Saltar al contenido
       </a>
       <Nav />
-      <Hero colorway={colorway} onColorway={setColorway} variant={variant} onVariant={setVariant} />
+      <Hero colorway={colorway} onColorway={setColorway} variant={variant} onVariant={changeVariant} />
       <main id="main">
-        <Details variant={variant} onVariant={setVariant} />
-        <Colours variant={variant} onVariant={setVariant} onPreview={preview} />
+        <Details variant={variant} onVariant={changeVariant} />
+        <Colours variant={variant} onVariant={changeVariant} onPreview={preview} />
         <Order colorway={colorway} variant={variant} />
       </main>
       <Footer />
       <OrderBar colorway={colorway} variant={variant} />
+      <p className="sr-only" role="status">
+        {status}
+      </p>
     </>
   );
 }

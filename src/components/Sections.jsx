@@ -17,7 +17,7 @@ export function Details({ variant, onVariant }) {
         </h2>
         <VariantSwitch value={variant} onChange={onVariant} />
       </div>
-      <div className="bento" ref={grid} aria-live="polite">
+      <div className="bento" ref={grid}>
         {DETAILS[shown].map((d) => (
           <SpotlightCard as="article" key={d.id} className={`bento__cell bento__cell--${d.id}`} spotlightColor="rgba(255, 59, 48, 0.12)">
             <div className="bento__photo">
@@ -49,7 +49,7 @@ export function Colours({ variant, onVariant, onPreview }) {
           <p className="colours__note">Cuerpo e inserto se imprimen por separado. Estas son algunas combinaciones ya hechas.</p>
         </div>
       </div>
-      <ul className="colours__tray" ref={tray} aria-live="polite">
+      <ul className="colours__tray" ref={tray}>
         {GALLERY[shown].map((g, i) => {
           const c = COLORWAYS.find((x) => x.id === g.colorway);
           return (

@@ -7,8 +7,9 @@
 // Switching model runs a "print head" sweep (sweep.js). Loaded lazily.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { ContactShadows, Environment, Lightformer, useTexture } from '@react-three/drei';
+import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
+import { ContactShadows } from '@react-three/drei';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { asset } from '../data.js';
 import {
   FOV,
@@ -230,10 +231,12 @@ function Stand({ colorway, variant, reducedMotion, interactive, progress, pose, 
   const size = useThree((s) => s.size);
   const camera = useThree((s) => s.camera);
   const layout = useMemo(() => layoutFor(size, pose), [size, pose]);
-  const logos = useTexture({
-    dark: asset('img/logo-horizontal-negro.png'),
-    light: asset('img/logo-horizontal-blanco.png'),
-  });
+  const [logoDark, logoLight] = useLoader(THREE.TextureLoader, [asset('img/logo-horizontal-negro.png'), asset('img/logo-horizontal-blanco.png')]);
+  const logos = useMemo(() => {
+    for (const t of [logoDark, logoLight]) t.colorSpace = THREE.SRGBColorSpace;
+    return { dark: logoDark, light: logoLight };
+  }, [logoDark, logoLight]);
+  const invalidate = useThree((s) => s.invalidate);
 
   const sweeps = useMemo(() => ({ t: makeSweep(), pinza: makeSweep() }), []);
   const mats = useMemo(() => ({ t: makeMaterials(sweeps.t), pinza: makeMaterials(sweeps.pinza) }), [sweeps]);
@@ -276,6 +279,18 @@ function Stand({ colorway, variant, reducedMotion, interactive, progress, pose, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [variant, reducedMotion, sweeps]);
 
+  // The canvas renders on demand (frameloop "demand"): these wake it up.
+  useEffect(() => {
+    const wake = () => invalidate();
+    window.addEventListener('scroll', wake, { passive: true });
+    if (interactive) window.addEventListener('pointermove', wake, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', wake);
+      window.removeEventListener('pointermove', wake);
+    };
+  }, [invalidate, interactive]);
+  useEffect(() => invalidate(), [invalidate, colorway, variant]);
+
   useEffect(() => {
     camera.position.set(0, 0, layout.z);
     camera.lookAt(0, 0, 0);
@@ -285,15 +300,18 @@ function Stand({ colorway, variant, reducedMotion, interactive, progress, pose, 
   const start = useRef(null);
   const smooth = useRef(progress.current);
 
-  useFrame((state, dt) => {
+  useFrame((state, delta) => {
     const g = travel.current;
     const r = turn.current;
     if (!g || !r) return;
+    const dt = Math.min(delta, 1 / 30); // the first frame after an idle pause would otherwise jump
     const k = 1 - Math.exp(-dt * 6);
+    let colourLeft = 0;
     for (const m of Object.values(mats)) {
       m.body.color.lerp(targets.current.body, k);
       m.cap.color.lerp(targets.current.cap, k);
       m.panel.color.lerp(targets.current.panel, k);
+      colourLeft += Math.abs(m.body.color.r - targets.current.body.r) + Math.abs(m.cap.color.g - targets.current.cap.g);
     }
 
     if (start.current === null) start.current = state.clock.elapsedTime;
@@ -306,7 +324,6 @@ function Stand({ colorway, variant, reducedMotion, interactive, progress, pose, 
     const at = poseAt(p, layout);
 
     const rise = reducedMotion ? 1 : 1 - Math.pow(2, -7 * Math.min(t / 1.8, 1));
-    const sway = reducedMotion ? 0 : Math.sin(t * 0.5) * 0.08;
     const px = interactive && !reducedMotion ? state.pointer.x : 0;
     const py = interactive && !reducedMotion ? state.pointer.y : 0;
 
@@ -314,8 +331,17 @@ function Stand({ colorway, variant, reducedMotion, interactive, progress, pose, 
     g.position.y = at.y + (1 - rise) * -1.2;
     g.scale.setScalar(at.s);
     // front (towards the hero copy) → back (towards the story) → front again for the anatomy
-    r.rotation.y = at.rot + (1 - rise) * -1 + sway + px * 0.18;
+    r.rotation.y = at.rot + (1 - rise) * -1 + px * 0.18;
     r.rotation.x = THREE.MathUtils.damp(r.rotation.x, -py * 0.1, 4, dt);
+
+    // keep rendering only while something is still moving
+    const busy =
+      rise < 0.999 ||
+      sweep.current ||
+      Math.abs(smooth.current - target) > 1e-4 ||
+      colourLeft > 1e-3 ||
+      Math.abs(r.rotation.x + py * 0.1) > 1e-4;
+    if (busy) state.invalidate();
     if (shadow.current && layout.floor !== null) {
       shadow.current.position.x = g.position.x;
       shadow.current.position.y = layout.floor - 0.06;
@@ -414,6 +440,26 @@ function Stand({ colorway, variant, reducedMotion, interactive, progress, pose, 
   );
 }
 
+/** Soft studio reflections from three's RoomEnvironment, built once on the GPU. */
+function StudioEnvironment() {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  useEffect(() => {
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const room = new RoomEnvironment();
+    const env = pmrem.fromScene(room, 0.04).texture;
+    scene.environment = env;
+    scene.environmentIntensity = 0.3;
+    return () => {
+      scene.environment = null;
+      env.dispose();
+      pmrem.dispose();
+      room.dispose?.();
+    };
+  }, [gl, scene]);
+  return null;
+}
+
 export default function Stand3D({ colorway, variant, reducedMotion, interactive, progress, pose, eventSource, annot }) {
   const wrap = useRef(null);
   const [visible, setVisible] = useState(true);
@@ -428,7 +474,7 @@ export default function Stand3D({ colorway, variant, reducedMotion, interactive,
   return (
     <div ref={wrap} className="stand3d">
       <Canvas
-        frameloop={visible ? 'always' : 'never'}
+        frameloop={visible ? 'demand' : 'never'}
         shadows
         dpr={[1, 2]}
         camera={{ position: [0, 0, 12], fov: FOV }}
@@ -441,12 +487,9 @@ export default function Stand3D({ colorway, variant, reducedMotion, interactive,
         <spotLight position={[-5, 8, 7]} angle={0.5} penumbra={0.9} intensity={190} castShadow shadow-mapSize={[1024, 1024]} />
         <directionalLight position={[4, 2, -5]} intensity={1.4} color="#ffd9cf" />
         <directionalLight position={[5, 3, 5]} intensity={0.5} />
-        <Environment resolution={256} frames={1}>
-          <Lightformer form="rect" intensity={2.2} position={[-4, 4, 4]} scale={[6, 3, 1]} />
-          <Lightformer form="rect" intensity={0.9} position={[5, 1, 3]} scale={[3, 6, 1]} />
-          <Lightformer form="rect" intensity={0.9} position={[0, 2, -6]} scale={[6, 3, 1]} />
-          <Lightformer form="ring" intensity={1.2} color="#ff3b30" position={[-4, -2, -6]} scale={3} />
-        </Environment>
+        <StudioEnvironment />
+        {/* warm red rim from behind, where the old ring light was */}
+        <pointLight position={[-4, -2, -6]} intensity={30} color="#ff3b30" />
         <Stand
           colorway={colorway}
           variant={variant}
