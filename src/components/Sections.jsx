@@ -2,16 +2,23 @@ import SpotlightCard from './rb/SpotlightCard.jsx';
 import TiltedCard from './rb/TiltedCard.jsx';
 import Magnet from './rb/Magnet.jsx';
 import FaqAccordion from './vg/FaqAccordion.jsx';
-import { COLORWAYS, CONTACT, DETAILS, FAQ, HAS_CONTACT, STEPS, img, orderHref, srcSet } from '../data.js';
+import { useRef } from 'react';
+import VariantSwitch, { useSlideSwap } from './VariantSwitch.jsx';
+import { COLORWAYS, CONTACT, DETAILS, FAQ, GALLERY, HAS_CONTACT, STEPS, VARIANTS, img, orderHref, srcSet } from '../data.js';
 
-export function Details() {
+export function Details({ variant, onVariant }) {
+  const grid = useRef(null);
+  const shown = useSlideSwap(variant, grid, '.bento__cell');
   return (
     <section className="details" id="detalles" aria-labelledby="detalles-title">
-      <h2 id="detalles-title" className="section-title">
-        Cortado a medida
-      </h2>
-      <div className="bento">
-        {DETAILS.map((d) => (
+      <div className="section-head">
+        <h2 id="detalles-title" className="section-title">
+          Cortado a medida
+        </h2>
+        <VariantSwitch value={variant} onChange={onVariant} />
+      </div>
+      <div className="bento" ref={grid} aria-live="polite">
+        {DETAILS[shown].map((d) => (
           <SpotlightCard as="article" key={d.id} className={`bento__cell bento__cell--${d.id}`} spotlightColor="rgba(255, 59, 48, 0.12)">
             <div className="bento__photo">
               <img src={img(d.photo, 800)} srcSet={srcSet(d.photo)} sizes="(min-width: 900px) 40vw, 100vw" alt={d.alt} loading="lazy" />
@@ -27,37 +34,47 @@ export function Details() {
   );
 }
 
-export function Colours({ onPreview }) {
+export function Colours({ variant, onVariant, onPreview }) {
+  const tray = useRef(null);
+  const shown = useSlideSwap(variant, tray, '.colour');
+  const model = VARIANTS.find((v) => v.id === shown);
   return (
     <section className="colours" id="colores" aria-labelledby="colores-title">
       <div className="colours__head">
         <h2 id="colores-title" className="section-title">
           Elige tu color
         </h2>
-        <p className="colours__note">Cuerpo e inserto se imprimen por separado. Estas son algunas combinaciones ya hechas.</p>
+        <div className="colours__aside">
+          <VariantSwitch value={variant} onChange={onVariant} />
+          <p className="colours__note">Cuerpo e inserto se imprimen por separado. Estas son algunas combinaciones ya hechas.</p>
+        </div>
       </div>
-      <ul className="colours__tray">
-        {COLORWAYS.map((c) => (
-          <li key={c.id} className="colour">
-            <TiltedCard className="colour__photo" src={img(c.photo, 800)} srcSet={srcSet(c.photo)} sizes="(min-width: 900px) 30vw, 80vw" alt={`Reposa ${c.name.toLowerCase()}`} rotateAmplitude={6} />
+      <ul className="colours__tray" ref={tray} aria-live="polite">
+        {GALLERY[shown].map((g, i) => {
+          const c = COLORWAYS.find((x) => x.id === g.colorway);
+          return (
+          <li key={i} className="colour">
+            <TiltedCard className="colour__photo" src={img(g.photo, 800)} srcSet={srcSet(g.photo)} sizes="(min-width: 900px) 30vw, 80vw" alt={`Reposa ${model.name.toLowerCase()}, ${g.name.toLowerCase()}`} rotateAmplitude={6} />
             <div className="colour__row">
               <h3 className="colour__name">
                 <span className="colour__chip" style={{ '--body': c.body, '--cap': c.cap }} aria-hidden="true" />
-                {c.name}
+                {g.name}
               </h3>
               <button className="link-btn" onClick={() => onPreview(c.id)}>
                 Verlo en 3D
               </button>
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
     </section>
   );
 }
 
-export function Order({ colorway }) {
+export function Order({ colorway, variant }) {
   const current = COLORWAYS.find((c) => c.id === colorway) ?? COLORWAYS[0];
+  const model = VARIANTS.find((v) => v.id === variant);
   return (
     <section className="order" id="pedido" aria-labelledby="pedido-title">
       <div className="order__cta">
@@ -65,7 +82,7 @@ export function Order({ colorway }) {
           Pide el tuyo.
         </h2>
         <p className="order__lede">
-          Dinos el color y lo imprimimos para ti. Ahora mismo tienes elegido <strong>{current.name.toLowerCase()}</strong>.
+          Dinos el color y lo imprimimos para ti. Ahora mismo tienes elegido el modelo <strong>{model.name.toLowerCase()}</strong> en <strong>{current.name.toLowerCase()}</strong>.
         </p>
         <ol className="steps">
           {STEPS.map((s) => (
@@ -77,7 +94,7 @@ export function Order({ colorway }) {
         </ol>
         <div className="order__actions">
           <Magnet padding={50} magnetStrength={5}>
-            <a className="btn btn--red btn--lg" href={orderHref(current.name)}>
+            <a className="btn btn--red btn--lg" href={orderHref(current.name, model.name)}>
               Escribir para pedirlo
             </a>
           </Magnet>

@@ -166,3 +166,84 @@ export function svgPath(pts, radius) {
   });
   return d;
 }
+
+// ─── The clamp model ("con pinza"), traced from rojo-envase-tarjeta, amarillo
+// and rojo-azul: a rectangular head with a slot and two insert strips on top,
+// one cell-truss leg fixed to the head, and a second leg that pivots on a screw
+// next to the head, carrying the logo panel and a small hook at its top.
+
+const P_HEAD = { left: -72, right: 72, bottom: 205, top: 262 };
+const pInner = (t) => quad([-44, 205], [-122, 96], [-196, 0], t); // fixed leg, t = 0 at the head
+const pOuter = (t) => quad([-86, 246], [-222, 166], [-292, 0], t);
+const L_PIVOT = [40, 222];
+const lInner = (t) => lerp([14, 212], [198, 0], t); // pivoting leg, t = 0 at the top
+const lOuter = (t) => lerp([70, 238], [276, 14], t);
+
+/** Head and fixed leg as one printed piece, counter-clockwise from the left foot. */
+export function pinzaBodyOutline() {
+  return [
+    [-292, 0],
+    [-196, 0],
+    ...sample(pInner, 14).reverse().slice(1), // foot → head
+    [P_HEAD.right - 18, P_HEAD.bottom],
+    [P_HEAD.right, P_HEAD.bottom + 14],
+    [P_HEAD.right, P_HEAD.top],
+    [P_HEAD.left, P_HEAD.top],
+    ...sample(pOuter, 14).slice(0, -1), // head → foot (the foot point opens the list)
+  ];
+}
+
+export function pinzaCells() {
+  const P = (t, s) => lerp(pInner(t), pOuter(t), s);
+  const m = 0.13;
+  const ts = [0.2, 0.39, 0.58, 0.77, 0.95];
+  const out = [];
+  for (let i = 0; i < ts.length - 1; i++) {
+    const a = ts[i], b = ts[i + 1], mid = (a + b) / 2;
+    const tri = i % 2 === 0 ? [P(a, m), P(b, m), P(mid, 1 - m)] : [P(a, 1 - m), P(b, 1 - m), P(mid, m)];
+    out.push(shrink(tri, 7));
+  }
+  // the slot along the head, under the insert strips
+  out.push([[-54, 236], [54, 236], [54, 247], [-54, 247]]);
+  return out;
+}
+
+/** One insert strip on top of the head (two sit side by side across the depth). */
+export function pinzaStripOutline() {
+  return [[-66, P_HEAD.top - 2], [66, P_HEAD.top - 2], [66, P_HEAD.top + 11], [-66, P_HEAD.top + 11]];
+}
+
+/** The pivoting leg: straight, tapered, with a hook above the pivot. */
+export function pinzaLegOutline() {
+  return [
+    [198, 0],
+    [262, 0],
+    [278, 14],
+    [70, 238],
+    [76, 262],
+    [64, 280],
+    [50, 278],
+    [56, 262],
+    [38, 246],
+    [14, 212],
+  ];
+}
+
+export function pinzaLegPanelOutline() {
+  const P = (t, s) => lerp(lInner(t), lOuter(t), s);
+  const ts = sample((t) => 0.2 + t * 0.66, 8);
+  return [...ts.map((t) => P(t, 0.18)), ...ts.reverse().map((t) => P(t, 0.82))];
+}
+
+export function pinzaLegPanelFrame() {
+  const P = (t, s) => lerp(lInner(t), lOuter(t), s);
+  const a = P(0.26, 0.5), b = P(0.8, 0.5);
+  return {
+    center: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2],
+    angle: Math.atan2(b[1] - a[1], b[0] - a[0]),
+    length: Math.hypot(b[0] - a[0], b[1] - a[1]),
+  };
+}
+
+export const PINZA_PIVOT = L_PIVOT;
+export const PINZA_INSERT_TOP = [0, P_HEAD.top + 8];

@@ -1,23 +1,47 @@
-// Real-time 3D stand for the scroll story at the top of the page. The geometry
-// is extruded from the traced silhouette in standShape.js (body, hooked top
-// insert, logo panels front and back), lit by one top-left key light with a
-// soft contact shadow. Scroll drives it: it starts on the right showing its
-// front (and, stood on end, only its upper half), and as the page scrolls it
-// turns to its other face while sliding left and panning to its lower half,
-// making room for the story text. Loaded lazily so the page paints first.
+// Real-time 3D stand for the scroll story at the top of the page. Both models
+// (en T and con pinza) are extruded from the silhouettes traced in
+// standShape.js and lit by one top-left key light. Scroll drives the stand: it
+// starts on the right showing its front (stood on end, only its upper half),
+// turns to its other face while sliding left and panning to its lower half for
+// the story, then comes back whole to the centre for the anatomy labels.
+// Switching model runs a "print head" sweep (sweep.js). Loaded lazily.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { ContactShadows, Environment, Lightformer, useTexture } from '@react-three/drei';
 import { asset } from '../data.js';
-import { FOV, STAND_DROP, bodyOutline, capOutline, cells, panelFrame, panelOutline, roundedPath } from './standShape.js';
+import {
+  FOV,
+  PINZA_INSERT_TOP,
+  PINZA_PIVOT,
+  STAND_DROP,
+  bodyOutline,
+  capOutline,
+  cells,
+  panelFrame,
+  panelOutline,
+  pinzaBodyOutline,
+  pinzaCells,
+  pinzaLegOutline,
+  pinzaLegPanelFrame,
+  pinzaLegPanelOutline,
+  pinzaStripOutline,
+  roundedPath,
+} from './standShape.js';
+import { applySweep, makeSweep } from './sweep.js';
 
 const S = 0.01; // photo pixels → scene units
 const DEPTH = 34;
 const BEVEL = 5;
+const FACE = DEPTH / 2 + BEVEL; // z of the body's front face
+const LEG_DEPTH = 24;
+const LEG_Z = FACE + 3 + LEG_DEPTH / 2 + BEVEL; // the pinza's pivoting leg sits in front of the body
+const LEG_FACE = LEG_Z + LEG_DEPTH / 2 + BEVEL;
+const LEG_BACK = LEG_Z - LEG_DEPTH / 2 - BEVEL;
 const TAN = Math.tan(((FOV / 2) * Math.PI) / 180);
 const MODEL_W = 6.3;
 const MODEL_H = 2.8;
+const SWEEP_SECONDS = 1.7;
 
 function toShape(pts, radius, holes = []) {
   const shape = new THREE.Shape();
@@ -30,23 +54,45 @@ function toShape(pts, radius, holes = []) {
   return shape;
 }
 
-function useStandGeometry() {
-  return useMemo(() => {
-    const extrude = (shape, depth, bevel) =>
-      new THREE.ExtrudeGeometry(shape, {
-        depth,
-        bevelEnabled: true,
-        bevelThickness: bevel,
-        bevelSize: bevel * 0.8,
-        bevelSegments: 4,
-        curveSegments: 8,
-      }).translate(0, 0, -depth / 2);
-    return {
-      body: extrude(toShape(bodyOutline(), 10, cells()), DEPTH, BEVEL),
-      cap: extrude(toShape(capOutline(), 5), DEPTH + 2, BEVEL),
-      panel: extrude(toShape(panelOutline(), 10), 1.5, 1),
-    };
-  }, []);
+const extrude = (shape, depth, bevel) =>
+  new THREE.ExtrudeGeometry(shape, {
+    depth,
+    bevelEnabled: true,
+    bevelThickness: bevel,
+    bevelSize: bevel * 0.8,
+    bevelSegments: 4,
+    curveSegments: 8,
+  }).translate(0, 0, -depth / 2);
+
+function useGeometry() {
+  return useMemo(
+    () => ({
+      t: {
+        body: extrude(toShape(bodyOutline(), 10, cells()), DEPTH, BEVEL),
+        cap: extrude(toShape(capOutline(), 5), DEPTH + 2, BEVEL),
+        panel: extrude(toShape(panelOutline(), 10), 1.5, 1),
+      },
+      pinza: {
+        body: extrude(toShape(pinzaBodyOutline(), 10, pinzaCells()), DEPTH, BEVEL),
+        strip: extrude(toShape(pinzaStripOutline(), 4), DEPTH / 2 - 6, 2),
+        leg: extrude(toShape(pinzaLegOutline(), 9), LEG_DEPTH, BEVEL),
+        panel: extrude(toShape(pinzaLegPanelOutline(), 10), 1.5, 1),
+        screw: new THREE.CylinderGeometry(9, 9, LEG_FACE + FACE + 4, 24).rotateX(Math.PI / 2),
+        screwHead: new THREE.CylinderGeometry(15, 15, 5, 6).rotateX(Math.PI / 2),
+      },
+    }),
+    []
+  );
+}
+
+function makeMaterials(uniforms) {
+  return {
+    body: applySweep(new THREE.MeshPhysicalMaterial({ roughness: 0.5, clearcoat: 0.25, clearcoatRoughness: 0.6 }), uniforms),
+    cap: applySweep(new THREE.MeshPhysicalMaterial({ roughness: 0.55, clearcoat: 0.2, clearcoatRoughness: 0.6 }), uniforms),
+    panel: applySweep(new THREE.MeshStandardMaterial({ roughness: 0.75 }), uniforms),
+    logo: applySweep(new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.92, toneMapped: false }), uniforms),
+    metal: applySweep(new THREE.MeshStandardMaterial({ color: '#dcdee2', metalness: 0.8, roughness: 0.28 }), uniforms),
+  };
 }
 
 /**
@@ -59,7 +105,6 @@ function layoutFor({ width, height }, pose) {
   const w = pose === 'vertical' ? MODEL_H : MODEL_W;
   const h = pose === 'vertical' ? MODEL_W : MODEL_H;
   if (width < 760) {
-    // phones: the stand holds the top of the screen and the copy runs underneath
     const viewH = Math.max(h / (pose === 'vertical' ? 0.42 : 0.32), w / (0.84 * aspect));
     const y = viewH * 0.2;
     return { z: viewH / 2 / TAN, x0: 0, x1: 0, y0: y, y1: y, x2: 0, y2: y, s2: 0.92, floor: y - h / 2 };
@@ -104,15 +149,84 @@ function poseAt(p, L) {
 // Reduced motion snaps between the resting places instead of travelling.
 const snap = (p) => (p < 0.17 ? 0 : p < 0.52 ? PHASE.aEnd : 0.8);
 
+const centroid = (tri) => [(tri[0][0] + tri[1][0] + tri[2][0]) / 3, (tri[0][1] + tri[1][1] + tri[2][1]) / 3];
+
+// What each anatomy label points at, per model, in outline coordinates + z.
+const ANCHORS = {
+  t: [
+    [0, 266, FACE + 2], // T head + insert
+    [...panelFrame().center, FACE + 2], // logo panel
+    [...centroid(cells()[1]), FACE + 2], // a leg cell
+    [-268, 10, FACE + 2], // foot
+  ],
+  pinza: [
+    [PINZA_INSERT_TOP[0], PINZA_INSERT_TOP[1], FACE], // insert strips
+    [PINZA_PIVOT[0], PINZA_PIVOT[1], LEG_FACE + 4], // pivot screw
+    [...centroid(pinzaCells()[1]), FACE + 2], // a leg cell
+    [...pinzaLegPanelFrame().center, LEG_FACE + 2], // logo panel
+  ],
+};
+const ANCHOR_VECTORS = Object.fromEntries(Object.entries(ANCHORS).map(([k, list]) => [k, list.map((a) => new THREE.Vector3(...a))]));
+
 const _v = new THREE.Vector3();
 const _c = new THREE.Vector3();
+const _box = new THREE.Box3();
 
-function Stand({ colorway, reducedMotion, interactive, progress, pose, annot }) {
+function TModel({ geo, mats }) {
+  const f = panelFrame();
+  const w = f.length * 0.86;
+  return (
+    <>
+      <mesh geometry={geo.body} material={mats.body} castShadow receiveShadow />
+      <mesh geometry={geo.cap} material={mats.cap} castShadow />
+      <mesh geometry={geo.panel} material={mats.panel} position={[0, 0, FACE - 0.6]} />
+      <mesh geometry={geo.panel} material={mats.panel} position={[0, 0, -FACE - 0.9]} />
+      <mesh material={mats.logo} position={[f.center[0], f.center[1], FACE + 2]} rotation={[0, 0, f.angle]}>
+        <planeGeometry args={[w, w * (358 / 1201)]} />
+      </mesh>
+      <mesh material={mats.logo} position={[f.center[0], f.center[1], -FACE - 3.6]} rotation={[0, Math.PI, -f.angle]}>
+        <planeGeometry args={[w, w * (358 / 1201)]} />
+      </mesh>
+    </>
+  );
+}
+
+function PinzaModel({ geo, mats }) {
+  const f = pinzaLegPanelFrame();
+  const w = f.length * 0.86;
+  const [px, py] = PINZA_PIVOT;
+  const stripZ = DEPTH / 4 + 1;
+  return (
+    <>
+      <mesh geometry={geo.body} material={mats.body} castShadow receiveShadow />
+      {/* two insert strips side by side along the top of the head */}
+      <mesh geometry={geo.strip} material={mats.cap} position={[0, 0, stripZ]} castShadow />
+      <mesh geometry={geo.strip} material={mats.cap} position={[0, 0, -stripZ]} castShadow />
+      {/* the pivoting leg, in front of the body */}
+      <mesh geometry={geo.leg} material={mats.body} position={[0, 0, LEG_Z]} castShadow receiveShadow />
+      <mesh geometry={geo.panel} material={mats.panel} position={[0, 0, LEG_FACE - 0.6]} />
+      <mesh geometry={geo.panel} material={mats.panel} position={[0, 0, LEG_BACK - 0.9]} />
+      <mesh material={mats.logo} position={[f.center[0], f.center[1], LEG_FACE + 2]} rotation={[0, 0, f.angle]}>
+        <planeGeometry args={[w, w * (358 / 1201)]} />
+      </mesh>
+      <mesh material={mats.logo} position={[f.center[0], f.center[1], LEG_BACK - 3.6]} rotation={[0, Math.PI, -f.angle]}>
+        <planeGeometry args={[w, w * (358 / 1201)]} />
+      </mesh>
+      {/* the screw it pivots on */}
+      <mesh geometry={geo.screw} material={mats.metal} position={[px, py, (LEG_FACE - FACE) / 2]} />
+      <mesh geometry={geo.screwHead} material={mats.metal} position={[px, py, LEG_FACE + 2]} />
+      <mesh geometry={geo.screwHead} material={mats.metal} position={[px, py, -FACE - 2]} />
+    </>
+  );
+}
+
+function Stand({ colorway, variant, reducedMotion, interactive, progress, pose, annot }) {
   const travel = useRef(null);
-  const model = useRef(null);
   const turn = useRef(null);
   const shadow = useRef(null);
-  const geo = useStandGeometry();
+  const groups = { t: useRef(null), pinza: useRef(null) };
+  const models = { t: useRef(null), pinza: useRef(null) };
+  const geo = useGeometry();
   const size = useThree((s) => s.size);
   const camera = useThree((s) => s.camera);
   const layout = useMemo(() => layoutFor(size, pose), [size, pose]);
@@ -120,26 +234,47 @@ function Stand({ colorway, reducedMotion, interactive, progress, pose, annot }) 
     dark: asset('img/logo-horizontal-negro.png'),
     light: asset('img/logo-horizontal-blanco.png'),
   });
-  const mats = useMemo(
-    () => ({
-      body: new THREE.MeshPhysicalMaterial({ roughness: 0.5, clearcoat: 0.25, clearcoatRoughness: 0.6 }),
-      cap: new THREE.MeshPhysicalMaterial({ roughness: 0.55, clearcoat: 0.2, clearcoatRoughness: 0.6 }),
-      panel: new THREE.MeshStandardMaterial({ roughness: 0.75 }),
-    }),
-    []
-  );
+
+  const sweeps = useMemo(() => ({ t: makeSweep(), pinza: makeSweep() }), []);
+  const mats = useMemo(() => ({ t: makeMaterials(sweeps.t), pinza: makeMaterials(sweeps.pinza) }), [sweeps]);
+
   // first paint uses the target colours directly; later changes are eased in useFrame
   const targets = useRef(null);
-  if (!targets.current) {
-    mats.body.color.set(colorway.body);
-    mats.cap.color.set(colorway.cap);
-    mats.panel.color.set(colorway.body).multiplyScalar(0.82);
-  }
-  targets.current = {
+  const next = {
     body: new THREE.Color(colorway.body),
     cap: new THREE.Color(colorway.cap),
     panel: new THREE.Color(colorway.body).multiplyScalar(0.82),
   };
+  if (!targets.current) {
+    for (const m of Object.values(mats)) {
+      m.body.color.copy(next.body);
+      m.cap.color.copy(next.cap);
+      m.panel.color.copy(next.panel);
+    }
+  }
+  targets.current = next;
+  for (const m of Object.values(mats)) m.logo.map = colorway.logo === 'light' ? logos.light : logos.dark;
+
+  // model switch: which one is showing, and the sweep in progress
+  const active = useRef(variant);
+  const initial = useRef(variant).current; // after mount, visibility is driven by the sweep only
+  const sweep = useRef(null);
+  useEffect(() => {
+    if (variant === active.current && !sweep.current) return;
+    const finish = (to) => {
+      for (const id of Object.keys(groups)) groups[id].current.visible = id === to;
+      for (const s of Object.values(sweeps)) s.uSide.value = 0;
+      active.current = to;
+      sweep.current = null;
+    };
+    if (sweep.current) finish(sweep.current.to); // a second click mid-sweep: settle first
+    if (variant === active.current) return;
+    if (reducedMotion) return finish(variant);
+    groups[variant].current.visible = true;
+    sweep.current = { from: active.current, to: variant, t: 0, finish };
+    // groups is a fresh object each render but its refs are stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [variant, reducedMotion, sweeps]);
 
   useEffect(() => {
     camera.position.set(0, 0, layout.z);
@@ -147,30 +282,19 @@ function Stand({ colorway, reducedMotion, interactive, progress, pose, annot }) 
     camera.updateProjectionMatrix();
   }, [camera, layout]);
 
-  const frame = panelFrame();
-  const logoW = frame.length * 0.86;
-  const logoH = logoW * (358 / 1201);
   const start = useRef(null);
   const smooth = useRef(progress.current);
-  const faceZ = DEPTH / 2 + BEVEL;
-  // Points the anatomy labels point at, in the traced outline's coordinates:
-  // top insert, logo panel, a leg cell, the foot.
-  const anchors = useMemo(() => {
-    const cell = cells()[1];
-    const cx = (cell[0][0] + cell[1][0] + cell[2][0]) / 3;
-    const cy = (cell[0][1] + cell[1][1] + cell[2][1]) / 3;
-    const { center } = panelFrame();
-    return [[0, 266], center, [cx, cy], [-268, 10]].map(([x, y]) => new THREE.Vector3(x, y, faceZ + 2));
-  }, [faceZ]);
 
   useFrame((state, dt) => {
     const g = travel.current;
     const r = turn.current;
     if (!g || !r) return;
     const k = 1 - Math.exp(-dt * 6);
-    mats.body.color.lerp(targets.current.body, k);
-    mats.cap.color.lerp(targets.current.cap, k);
-    mats.panel.color.lerp(targets.current.panel, k);
+    for (const m of Object.values(mats)) {
+      m.body.color.lerp(targets.current.body, k);
+      m.cap.color.lerp(targets.current.cap, k);
+      m.panel.color.lerp(targets.current.panel, k);
+    }
 
     if (start.current === null) start.current = state.clock.elapsedTime;
     const t = state.clock.elapsedTime - start.current;
@@ -196,21 +320,48 @@ function Stand({ colorway, reducedMotion, interactive, progress, pose, annot }) 
       shadow.current.position.x = g.position.x;
       shadow.current.position.y = layout.floor - 0.06;
     }
+    g.updateMatrixWorld(true);
+
+    // The print-head sweep, bottom to top over the part of the stand on screen.
+    const sw = sweep.current;
+    if (sw) {
+      sw.t = Math.min(1, sw.t + dt / SWEEP_SECONDS);
+      _box.setFromObject(r);
+      const half = layout.z * TAN;
+      const lo = Math.max(_box.min.y, -half) - 0.1;
+      const hi = Math.min(_box.max.y, half) + 0.1;
+      const cut = lerp(lo, hi, ease(sw.t));
+      sweeps[sw.from].uSide.value = 1;
+      sweeps[sw.to].uSide.value = -1;
+      sweeps[sw.from].uCut.value = cut;
+      sweeps[sw.to].uCut.value = cut;
+      if (sw.t >= 1) sw.finish(sw.to);
+    }
 
     // Anatomy labels: project each anchor to the screen and move its marker,
     // leader line and label there. Written straight to the DOM, no React render.
     const A = annot?.current;
-    if (!A || !model.current) return;
-    g.updateMatrixWorld(true);
+    const shown = sweep.current?.to ?? active.current;
+    const model = models[shown].current;
+    if (!A || !model) return;
     const { width, height } = state.size;
     const wide = width >= 760;
     _c.setFromMatrixPosition(g.matrixWorld).project(state.camera);
     const cx = ((_c.x + 1) / 2) * width;
     const reveal = (p - (PHASE.bEnd - 0.04)) / (1 - PHASE.bEnd);
-    anchors.forEach((a, i) => {
-      _v.copy(a).applyMatrix4(model.current.matrixWorld).project(state.camera);
+    const pts = ANCHOR_VECTORS[shown].map((a, i) => {
+      _v.copy(a).applyMatrix4(model.matrixWorld).project(state.camera);
       const sx = ((_v.x + 1) / 2) * width;
       const sy = ((1 - _v.y) / 2) * height;
+      const side = sx < cx - 4 ? -1 : 1;
+      return { i, sx, sy, side, ly: sy };
+    });
+    // keep labels on the same side at least 76px apart, in screen order
+    for (const side of [-1, 1]) {
+      const col = pts.filter((q) => q.side === side).sort((m, n) => m.sy - n.sy);
+      for (let j = 1; j < col.length; j++) col[j].ly = Math.max(col[j].ly, col[j - 1].ly + 76);
+    }
+    for (const { i, sx, sy, side, ly } of pts) {
       const alpha = reducedMotion ? (p > 0.6 ? 1 : 0) : clamp01((reveal - i * 0.14) / 0.08);
       const marker = A.markers[i];
       if (marker) {
@@ -219,43 +370,36 @@ function Stand({ colorway, reducedMotion, interactive, progress, pose, annot }) 
       }
       const label = A.labels[i];
       const line = A.lines[i];
-      if (!label || !line) return;
-      const side = sx < cx - 4 ? -1 : 1;
+      if (!label || !line) continue;
       const edge = side < 0 ? Math.min(sx - 48, cx - width * 0.11) : Math.max(sx + 48, cx + width * 0.11);
       const show = wide ? alpha : 0;
       label.style.opacity = show;
       label.dataset.side = side < 0 ? 'left' : 'right';
-      label.style.transform = `translate(${edge}px, ${sy}px) translate(${side < 0 ? '-100%' : '0'}, -50%) translateX(${(1 - show) * side * 12}px)`;
+      label.style.transform = `translate(${edge}px, ${ly}px) translate(${side < 0 ? '-100%' : '0'}, -50%) translateX(${(1 - show) * side * 12}px)`;
       const x1 = sx + side * 10;
       line.setAttribute('x1', x1);
       line.setAttribute('y1', sy);
       line.setAttribute('x2', x1 + (edge - x1) * show);
-      line.setAttribute('y2', sy);
+      line.setAttribute('y2', sy + (ly - sy) * show);
       line.style.opacity = show;
-    });
+    }
   });
-
-  const logo = colorway.logo === 'light' ? logos.light : logos.dark;
 
   return (
     <>
       <group ref={travel}>
         <group ref={turn}>
-          {/* vertical pose: stood on end, the hooked top pointing at the text */}
+          {/* vertical pose: stood on end, the head pointing at the text */}
           <group rotation={[0, 0, pose === 'vertical' ? Math.PI / 2 : 0]}>
-            <group ref={model} scale={S} position={[0, -STAND_DROP, 0]}>
-              <mesh geometry={geo.body} material={mats.body} castShadow receiveShadow />
-              <mesh geometry={geo.cap} material={mats.cap} castShadow />
-              <mesh geometry={geo.panel} material={mats.panel} position={[0, 0, faceZ - 0.6]} />
-              <mesh geometry={geo.panel} material={mats.panel} position={[0, 0, -faceZ - 0.9]} />
-              <mesh position={[frame.center[0], frame.center[1], faceZ + 2]} rotation={[0, 0, frame.angle]}>
-                <planeGeometry args={[logoW, logoH]} />
-                <meshBasicMaterial map={logo} transparent opacity={0.92} toneMapped={false} />
-              </mesh>
-              <mesh position={[frame.center[0], frame.center[1], -faceZ - 3.6]} rotation={[0, Math.PI, -frame.angle]}>
-                <planeGeometry args={[logoW, logoH]} />
-                <meshBasicMaterial map={logo} transparent opacity={0.92} toneMapped={false} />
-              </mesh>
+            <group ref={groups.t} visible={initial === 't'}>
+              <group ref={models.t} scale={S} position={[0, -STAND_DROP, 0]}>
+                <TModel geo={geo.t} mats={mats.t} />
+              </group>
+            </group>
+            <group ref={groups.pinza} visible={initial === 'pinza'}>
+              <group ref={models.pinza} scale={S} position={[0, -STAND_DROP, -0.2]}>
+                <PinzaModel geo={geo.pinza} mats={mats.pinza} />
+              </group>
             </group>
           </group>
         </group>
@@ -270,7 +414,7 @@ function Stand({ colorway, reducedMotion, interactive, progress, pose, annot }) 
   );
 }
 
-export default function Stand3D({ colorway, reducedMotion, interactive, progress, pose, eventSource, annot }) {
+export default function Stand3D({ colorway, variant, reducedMotion, interactive, progress, pose, eventSource, annot }) {
   const wrap = useRef(null);
   const [visible, setVisible] = useState(true);
 
@@ -303,7 +447,15 @@ export default function Stand3D({ colorway, reducedMotion, interactive, progress
           <Lightformer form="rect" intensity={0.9} position={[0, 2, -6]} scale={[6, 3, 1]} />
           <Lightformer form="ring" intensity={1.2} color="#ff3b30" position={[-4, -2, -6]} scale={3} />
         </Environment>
-        <Stand colorway={colorway} reducedMotion={reducedMotion} interactive={interactive} progress={progress} pose={pose} annot={annot} />
+        <Stand
+          colorway={colorway}
+          variant={variant}
+          reducedMotion={reducedMotion}
+          interactive={interactive}
+          progress={progress}
+          pose={pose}
+          annot={annot}
+        />
       </Canvas>
     </div>
   );

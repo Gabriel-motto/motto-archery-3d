@@ -9,7 +9,8 @@ import { useGSAP } from '@gsap/react';
 import SplitText from './rb/SplitText.jsx';
 import ScrollReveal from './rb/ScrollReveal.jsx';
 import Magnet from './rb/Magnet.jsx';
-import { ANATOMY, COLORWAYS, orderHref } from '../data.js';
+import { ANATOMY, COLORWAYS, VARIANTS, orderHref } from '../data.js';
+import VariantSwitch from './VariantSwitch.jsx';
 import { useFinePointer, useReducedMotion } from '../hooks/useMotionPrefs.js';
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -19,7 +20,7 @@ const Stand3D = lazy(() => import('../three/Stand3D.jsx'));
 // ?pose=upright shows the stand on its feet; the default stands it on end.
 const POSE = new URLSearchParams(window.location.search).get('pose') === 'upright' ? 'upright' : 'vertical';
 
-export default function Hero({ colorway, onColorway }) {
+export default function Hero({ colorway, onColorway, variant, onVariant }) {
   const story = useRef(null);
   const progress = useRef(0);
   // DOM nodes the 3D scene moves every frame (markers, leader lines, labels)
@@ -27,6 +28,8 @@ export default function Hero({ colorway, onColorway }) {
   const reducedMotion = useReducedMotion();
   const finePointer = useFinePointer();
   const current = COLORWAYS.find((c) => c.id === colorway) ?? COLORWAYS[0];
+  const model = VARIANTS.find((v) => v.id === variant);
+  const labels = ANATOMY[variant];
 
   useGSAP(
     () => {
@@ -46,6 +49,7 @@ export default function Hero({ colorway, onColorway }) {
         <Suspense fallback={null}>
           <Stand3D
             colorway={current}
+            variant={variant}
             reducedMotion={reducedMotion}
             interactive={finePointer}
             progress={progress}
@@ -56,16 +60,16 @@ export default function Hero({ colorway, onColorway }) {
         </Suspense>
         <div className="anatomy" aria-hidden="true">
           <svg className="anatomy__lines">
-            {ANATOMY.map((a, i) => (
+            {labels.map((a, i) => (
               <line key={a.title} ref={(el) => (annot.current.lines[i] = el)} />
             ))}
           </svg>
-          {ANATOMY.map((a, i) => (
+          {labels.map((a, i) => (
             <span key={a.title} className="anatomy__marker" ref={(el) => (annot.current.markers[i] = el)}>
               {i + 1}
             </span>
           ))}
-          {ANATOMY.map((a, i) => (
+          {labels.map((a, i) => (
             <span key={a.title} className="anatomy__label" ref={(el) => (annot.current.labels[i] = el)}>
               <strong>{a.title}</strong>
               {a.text}
@@ -80,6 +84,7 @@ export default function Hero({ colorway, onColorway }) {
           <p className="hero__lede">
             Reposa arcos para arcos de poleas, diseñado por un arquero de competición para su propio arco. Impreso en 3D bajo pedido, en tu color.
           </p>
+          <VariantSwitch className="hero__switch" value={variant} onChange={onVariant} />
           <fieldset className="swatches">
             <legend className="swatches__legend">
               Color: <strong>{current.name}</strong>
@@ -96,7 +101,7 @@ export default function Hero({ colorway, onColorway }) {
           </fieldset>
           <div className="hero__actions">
             <Magnet padding={40} magnetStrength={5}>
-              <a className="btn btn--red" href={orderHref(current.name)}>
+              <a className="btn btn--red" href={orderHref(current.name, model.name)}>
                 Pide el tuyo
               </a>
             </Magnet>
@@ -137,7 +142,7 @@ export default function Hero({ colorway, onColorway }) {
           </h2>
           {/* the readable version of the labels: shown on phones, for screen readers everywhere */}
           <ol className="anatomy__legend">
-            {ANATOMY.map((a) => (
+            {labels.map((a) => (
               <li key={a.title}>
                 <strong>{a.title}.</strong> {a.text}
               </li>

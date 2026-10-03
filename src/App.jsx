@@ -4,10 +4,11 @@ import Hero from './components/Hero.jsx';
 import { Colours, Details, Order } from './components/Sections.jsx';
 import Footer from './components/Footer.jsx';
 import OrderBar from './components/OrderBar.jsx';
-import { COLORWAYS } from './data.js';
+import { COLORWAYS, VARIANTS } from './data.js';
 
 export default function App() {
   const [colorway, setColorway] = useState(COLORWAYS[0].id);
+  const [variant, setVariant] = useState(VARIANTS[0].id);
 
   // "Verlo en 3D" from the colour tray: switch the model, go back up to it
   const preview = (id) => {
@@ -22,14 +23,14 @@ export default function App() {
         Saltar al contenido
       </a>
       <Nav />
-      <Hero colorway={colorway} onColorway={setColorway} />
+      <Hero colorway={colorway} onColorway={setColorway} variant={variant} onVariant={setVariant} />
       <main id="main">
-        <Details />
-        <Colours onPreview={preview} />
-        <Order colorway={colorway} />
+        <Details variant={variant} onVariant={setVariant} />
+        <Colours variant={variant} onVariant={setVariant} onPreview={preview} />
+        <Order colorway={colorway} variant={variant} />
       </main>
       <Footer />
-      <OrderBar colorway={colorway} />
+      <OrderBar colorway={colorway} variant={variant} />
     </>
   );
 }
