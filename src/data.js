@@ -111,3 +111,12 @@ export const FAQ = [
     a: 'Escríbenos con el color que quieres y te explicamos el resto del proceso.',
   },
 ];
+
+// Labels for the 3D anatomy, in the order of the anchors in Stand3D.
+// Only what the photos show; no measurements until the owner gives them.
+export const ANATOMY = [
+  { title: 'Cabeza en T con inserto', text: 'El inserto superior se imprime aparte, en otro color.' },
+  { title: 'Panel con la marca', text: 'Logo Motto Archery en relieve, en las dos caras.' },
+  { title: 'Celdas triangulares', text: 'Quitan material donde la pieza no trabaja.' },
+  { title: 'Dos patas en arco', text: 'Apoyo ancho y separado sobre el suelo.' },
+];

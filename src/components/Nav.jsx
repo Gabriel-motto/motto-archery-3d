@@ -8,13 +8,22 @@ const LINKS = [
   { href: '#pedido', label: 'Pedido' },
 ];
 
-/** Floating pill nav; turns solid once the page scrolls under it. */
+/** Floating pill nav: solid once the page scrolls under it, out of the way while scrolling down, back on the way up. */
 export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 24);
+      if (Math.abs(y - last) > 6) {
+        setHidden(y > last && y > 160);
+        last = y;
+      }
+    };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -28,7 +37,7 @@ export default function Nav() {
   }, [open]);
 
   return (
-    <nav className={`nav ${scrolled ? 'is-scrolled' : ''} ${open ? 'is-open' : ''}`} aria-label="Principal">
+    <nav className={`nav ${scrolled ? 'is-scrolled' : ''} ${open ? 'is-open' : ''} ${hidden && !open ? 'is-hidden' : ''}`} aria-label="Principal">
       <a className="nav__brand" href="#inicio" aria-label="Motto Archery, inicio">
         <img src={asset('img/logo-horizontal-blanco.png')} alt="" width="120" height="36" />
       </a>

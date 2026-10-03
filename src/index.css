@@ -108,6 +108,8 @@ main { overflow-x: clip; }
   transition: background-color 0.3s var(--ease), box-shadow 0.3s var(--ease);
 }
 .nav.is-scrolled { background: rgba(14, 14, 14, 0.92); box-shadow: inset 0 0 0 1px var(--line), var(--lift); }
+.nav { transition: background-color 0.3s var(--ease), box-shadow 0.3s var(--ease), transform 0.45s var(--ease); }
+.nav.is-hidden:not(:focus-within) { transform: translate(-50%, calc(-100% - 24px)); }
 .nav__brand { display: inline-flex; align-items: center; min-height: 44px; }
 .nav__brand img { height: 30px; width: auto; }
 .nav__links { display: flex; gap: 4px; list-style: none; margin: 0 0 0 auto; padding: 0; }
@@ -187,11 +189,39 @@ main { overflow-x: clip; }
   font-size: clamp(44px, 6vw, 80px); line-height: 0.9; color: var(--red-hot); margin-bottom: 24px;
 }
 .story__text {
-  margin: 0; font-family: var(--display); font-weight: 800; text-transform: uppercase;
-  font-size: clamp(30px, 3.4vw, 48px); line-height: 1.02;
+  margin: 0; font-family: var(--body); font-weight: 500; letter-spacing: -0.01em;
+  font-size: clamp(22px, 2.1vw, 30px); line-height: 1.35; max-width: 30ch;
 }
 .story__note { margin: 28px 0 0; color: var(--bone-2); max-width: 42ch; }
 .sr-word { display: inline-block; will-change: opacity, filter; }
+
+/* ── Anatomy: labels the 3D scene pins to the stand's parts ── */
+.panel--anatomy { min-height: 200svh; align-items: flex-start; }
+.panel--anatomy .panel__copy { position: sticky; top: 112px; }
+.anatomy__title {
+  font-family: var(--display); font-weight: 900; text-transform: uppercase;
+  font-size: clamp(44px, 6vw, 80px); line-height: 0.9;
+}
+.anatomy__legend { /* the labels carry this on wide screens */
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+.anatomy { position: absolute; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+.anatomy__lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.anatomy__lines line { stroke: rgba(242, 240, 235, 0.55); stroke-width: 1; opacity: 0; }
+.anatomy__marker {
+  position: absolute; left: 0; top: 0; opacity: 0;
+  display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--bone); color: var(--foam); font: 800 14px/1 var(--display);
+  box-shadow: 0 0 0 4px rgba(242, 240, 235, 0.18), 0 6px 14px rgba(0, 0, 0, 0.6);
+}
+.anatomy__label {
+  position: absolute; left: 0; top: 0; opacity: 0; width: max-content; max-width: 230px;
+  padding: 0 6px; color: var(--bone-2); font-size: 14px; line-height: 1.4;
+}
+.anatomy__label[data-side='left'] { text-align: right; }
+.anatomy__label strong {
+  display: block; color: var(--bone); font: 800 20px/1.05 var(--display); text-transform: uppercase; margin-bottom: 4px;
+}
 
 .swatches { border: 0; margin: 0; padding: 0; min-width: 0; }
 .swatches__legend { padding: 0; margin-bottom: 10px; color: var(--bone-2); font-size: 15px; }
@@ -214,7 +244,7 @@ main { overflow-x: clip; }
 
 @media (max-width: 759px) {
   /* phones: the stand holds the top of the screen, the copy runs underneath */
-  .panel { align-items: flex-end; padding: 0 var(--gutter) 40px; }
+  .panel { align-items: flex-end; padding: 0 var(--gutter) 104px; }
   .panel--hero { padding-top: 46svh; }
   .panel--story { padding-top: 46svh; }
   .panel__copy { width: 100%; }
@@ -223,6 +253,20 @@ main { overflow-x: clip; }
     background: rgba(14, 14, 14, 0.82); border-radius: var(--radius); backdrop-filter: blur(6px);
   }
   .hero__title { font-size: 50px; }
+  .panel--anatomy { min-height: 160svh; padding-top: 52svh; }
+  .panel--anatomy .panel__copy {
+    position: sticky; top: auto; bottom: 96px; padding: 20px 22px; margin: 0 calc(var(--gutter) * -0.5);
+    background: rgba(14, 14, 14, 0.86); border-radius: var(--radius); backdrop-filter: blur(6px);
+  }
+  .anatomy__title { font-size: 40px; margin-bottom: 12px; }
+  .anatomy__label, .anatomy__lines { display: none; }
+  .anatomy__legend {
+    position: static; width: auto; height: auto; overflow: visible; clip: auto; white-space: normal;
+    margin: 0; padding-left: 22px; display: grid; gap: 8px; color: var(--bone-2); font-size: 15px;
+  }
+  .anatomy__legend li::marker { color: var(--red-hot); font-weight: 700; }
+  .anatomy__legend strong { color: var(--bone); font-weight: 600; }
+  .story__text { font-size: 20px; }
   .hero__lede { font-size: 16px; margin: 14px 0 20px; }
   .hero__actions { margin-top: 20px; }
   .scroll-cue { display: none; }
@@ -356,3 +400,19 @@ main { overflow-x: clip; }
 @media (max-width: 360px) {
   .swatches__row { gap: 2px; padding: 4px; }
 }
+
+/* ── Mobile order bar: appears after the hero, gone again at the order section ── */
+.order-bar { display: none; }
+@media (max-width: 759px) {
+  .order-bar {
+    position: fixed; z-index: 40; left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom));
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 8px 8px 8px 16px; border-radius: 999px;
+    background: rgba(14, 14, 14, 0.94); box-shadow: inset 0 0 0 1px var(--line), var(--lift);
+    transform: translateY(calc(100% + 24px)); transition: transform 0.45s var(--ease);
+  }
+  .order-bar.is-shown { transform: none; }
+  .order-bar__pick { display: flex; align-items: center; gap: 10px; min-width: 0; font-size: 15px; color: var(--bone-2); }
+  .order-bar__pick strong { color: var(--bone); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+@media (prefers-reduced-motion: reduce) { .order-bar, .nav { transition: none; } }

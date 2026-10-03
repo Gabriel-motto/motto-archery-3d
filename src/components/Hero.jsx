@@ -1,7 +1,7 @@
-// The opening scroll story: the 3D stand stays pinned while two panels scroll
-// over it. Panel one (hero) has the copy on the left and the stand on the
-// right; scrolling turns the stand to its other face and slides it left,
-// which leaves the right side free for panel two, the product's story.
+// The opening scroll story: the 3D stand stays pinned while three panels
+// scroll over it. Hero: copy on the left, stand on the right. Story: the stand
+// turns to its other face and slides left, leaving room for the origin text.
+// Anatomy: it comes back to the centre, whole, and labels point at its parts.
 import { lazy, Suspense, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -9,7 +9,7 @@ import { useGSAP } from '@gsap/react';
 import SplitText from './rb/SplitText.jsx';
 import ScrollReveal from './rb/ScrollReveal.jsx';
 import Magnet from './rb/Magnet.jsx';
-import { COLORWAYS, orderHref } from '../data.js';
+import { ANATOMY, COLORWAYS, orderHref } from '../data.js';
 import { useFinePointer, useReducedMotion } from '../hooks/useMotionPrefs.js';
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -22,6 +22,8 @@ const POSE = new URLSearchParams(window.location.search).get('pose') === 'uprigh
 export default function Hero({ colorway, onColorway }) {
   const story = useRef(null);
   const progress = useRef(0);
+  // DOM nodes the 3D scene moves every frame (markers, leader lines, labels)
+  const annot = useRef({ markers: [], lines: [], labels: [] });
   const reducedMotion = useReducedMotion();
   const finePointer = useFinePointer();
   const current = COLORWAYS.find((c) => c.id === colorway) ?? COLORWAYS[0];
@@ -49,8 +51,27 @@ export default function Hero({ colorway, onColorway }) {
             progress={progress}
             pose={POSE}
             eventSource={document.getElementById('root')}
+            annot={annot}
           />
         </Suspense>
+        <div className="anatomy" aria-hidden="true">
+          <svg className="anatomy__lines">
+            {ANATOMY.map((a, i) => (
+              <line key={a.title} ref={(el) => (annot.current.lines[i] = el)} />
+            ))}
+          </svg>
+          {ANATOMY.map((a, i) => (
+            <span key={a.title} className="anatomy__marker" ref={(el) => (annot.current.markers[i] = el)}>
+              {i + 1}
+            </span>
+          ))}
+          {ANATOMY.map((a, i) => (
+            <span key={a.title} className="anatomy__label" ref={(el) => (annot.current.labels[i] = el)}>
+              <strong>{a.title}</strong>
+              {a.text}
+            </span>
+          ))}
+        </div>
       </div>
 
       <header className="panel panel--hero" id="inicio">
@@ -106,6 +127,22 @@ export default function Hero({ colorway, onColorway }) {
             No salió de un catálogo. Lo diseñó un arquero de poleas, después de muchos años compitiendo, para apoyar su propio arco entre tandas. Luego se lo pidieron los de su línea.
           </ScrollReveal>
           <p className="story__note">Hoy cada reposa se sigue imprimiendo uno a uno, bajo pedido, en el color que eliges.</p>
+        </div>
+      </section>
+
+      <section className="panel panel--anatomy" aria-labelledby="pieza-title">
+        <div className="panel__copy">
+          <h2 id="pieza-title" className="anatomy__title">
+            Pieza a pieza
+          </h2>
+          {/* the readable version of the labels: shown on phones, for screen readers everywhere */}
+          <ol className="anatomy__legend">
+            {ANATOMY.map((a) => (
+              <li key={a.title}>
+                <strong>{a.title}.</strong> {a.text}
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
     </div>

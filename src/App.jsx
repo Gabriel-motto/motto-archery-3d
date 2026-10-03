@@ -3,6 +3,7 @@ import Nav from './components/Nav.jsx';
 import Hero from './components/Hero.jsx';
 import { Colours, Details, Order } from './components/Sections.jsx';
 import Footer from './components/Footer.jsx';
+import OrderBar from './components/OrderBar.jsx';
 import { COLORWAYS } from './data.js';
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
         <Order colorway={colorway} />
       </main>
       <Footer />
+      <OrderBar colorway={colorway} />
     </>
   );
 }
