@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="footer">
       <div className="footer__cols">
-        <p className="footer__claim">Reposa arcos para arcos de poleas. Diseñado en la línea de tiro.</p>
+        <p className="footer__claim">Soporte para arcos compuestos. Diseñado en la línea de tiro.</p>
         <ul className="footer__links">
           <li><a href="#origen">Origen</a></li>
           <li><a href="#detalles">Detalles</a></li>

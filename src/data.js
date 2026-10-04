@@ -59,8 +59,8 @@ export const DETAILS = {
     { id: 'celdas', ...TOUGH, photo: 'multicolor-apilados', alt: 'Reposa en T verde, azul, morado y rosa apilados' },
     {
       id: 'insertos',
-      title: 'Cabeza en T con inserto',
-      text: 'Combina cuerpo y cabeza a tu gusto.',
+      title: 'Cabezal en T',
+      text: 'Especial para palas bífidas.',
       photo: 'negro-insertos-vertical',
       alt: 'Reposa en T negros con insertos azul, verde, rojo y naranja',
     },
@@ -78,15 +78,15 @@ export const DETAILS = {
     { id: 'celdas', ...TOUGH, photo: 'rojo-azul-verde', alt: 'Reposa con pinza rojo con su pata calada e insertos azul y verde' },
     {
       id: 'insertos',
-      title: 'Cabezal con insertos',
-      text: 'Dos bandas de color donde apoya el arco.',
+      title: 'Cabezal con pinza',
+      text: 'Diseño universal.',
       photo: 'amarillo-perfil',
       alt: 'Reposa con pinza amarillos con las bandas negras del cabezal',
     },
     {
       id: 'plegado', // grid slot name only
       title: 'Pata articulada',
-      text: 'Gira sobre su tornillo junto al cabezal.',
+      text: 'Apertura total para todo tipo de palas.',
       photo: 'patas-neutras',
       alt: 'Patas articuladas blanca, gris y negra con su tornillo y el panel del logo',
     },
@@ -121,23 +121,23 @@ export const STEPS = [
 // Only answers we know; price, shipping and shop names come from the owner.
 export const FAQ = [
   { q: '¿Dónde lo compro?', a: 'En tiendas especializadas de tiro con arco, o escribiéndonos directamente.' },
-  { q: '¿Puedo pedir un color especial?', a: 'Sí. Si no está entre los de stock, te lo hacemos.' },
+  { q: '¿Puedo pedir un color especial?', a: 'Pregúntanos por disponibilidad de colores.' },
   { q: '¿Para qué arcos sirve?', a: 'Para arcos de poleas. Nació para el de su creador.' },
   {
     q: '¿Qué diferencia hay entre los dos modelos?',
-    a: 'El modelo en T lleva una cabeza en T con inserto de color. El modelo con pinza lleva un cabezal con dos bandas de inserto y una pata articulada.',
+    a: 'El modelo en T lleva una cabeza en T especial para palas bífidas. El modelo con pinza permite usarlo en todo tipo de arcos compuestos.',
   },
 ];
 
 export const ANATOMY = {
   t: [
-    { title: 'Cabeza en T', text: 'Inserto a contraste.' },
+    { title: 'Cabezal en T', text: 'Especial para palas bífidas.' },
     { title: 'Panel Motto Archery', text: 'Logo en relieve.' },
     { title: 'Estructura en triángulos', text: 'Resistente, con el peso mínimo.' },
     { title: 'Patas en arco', text: 'Base ancha, apoyo firme.' },
   ],
   pinza: [
-    { title: 'Cabezal con insertos', text: 'Dos bandas donde apoya el arco.' },
+    { title: 'Cabezal con pinza', text: 'Diseño universal.' },
     { title: 'Pata articulada', text: 'Gira sobre su tornillo.' },
     { title: 'Pata calada', text: 'Resistente, con el peso mínimo.' },
     { title: 'Panel Motto Archery', text: 'Logo en relieve sobre panal.' },

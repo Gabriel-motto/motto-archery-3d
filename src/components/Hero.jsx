@@ -80,9 +80,9 @@ export default function Hero({ colorway, onColorway, variant, onVariant }) {
 
       <header className="panel panel--hero" id="inicio" tabIndex={-1}>
         <div className="panel__copy">
-          <SplitText as="h1" className="hero__title" text="Tu arco no toca el suelo." delay={0.15} />
+          <SplitText as="h1" className="hero__title" text="Tu arco con pisada firme." delay={0.15} />
           <p className="hero__lede">
-            El reposa para arcos de poleas diseñado por un arquero de competición. Ligero, firme y en tus colores.
+            El soporte de arcos compuestos diseñado para la competición. Ligero, firme y preciso.
           </p>
           <VariantSwitch className="hero__switch" value={variant} onChange={onVariant} />
           <fieldset className="swatches">
@@ -129,16 +129,16 @@ export default function Hero({ colorway, onColorway, variant, onVariant }) {
             // finish while the panel settles: the text sits lower on phones
             end={() => (window.innerWidth < 760 ? 'top 72%' : 'top 42%')}
           >
-            Nada de catálogo. Lo diseñó un arquero de poleas, con años de competición encima, para su propio arco. Los de su línea lo vieron y quisieron el suyo.
+            Nacido en la línea de tiro, usado por los mejores. Diseñado por un arquero para arqueros. Buscando la mayor estabilidad incluso en aire libre. Testado y demostrado en campeonatos de todo el mundo.
           </ScrollReveal>
-          <p className="story__note">Hoy está en tiendas especializadas. ¿Lo quieres único? Te lo hacemos.</p>
+          <p className="story__note">En tiendas especializadas. ¿Quieres hacerlo tuyo? Contáctanos.</p>
         </div>
       </section>
 
       <section className="panel panel--anatomy" aria-labelledby="pieza-title">
         <div className="panel__copy">
           <h2 id="pieza-title" className="anatomy__title">
-            Sin nada de sobra
+            Ideado en busca de la perfección
           </h2>
           {/* the readable version of the labels: shown on phones, for screen readers everywhere */}
           <ol className="anatomy__legend">

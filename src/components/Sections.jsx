@@ -13,7 +13,7 @@ export function Details({ variant, onVariant }) {
     <section className="details" id="detalles" aria-labelledby="detalles-title">
       <div className="section-head">
         <h2 id="detalles-title" className="section-title">
-          Sin concesiones
+          Al detalle
         </h2>
         <VariantSwitch value={variant} onChange={onVariant} />
       </div>
@@ -46,7 +46,7 @@ export function Colours({ variant, onVariant, onPreview }) {
         </h2>
         <div className="colours__aside">
           <VariantSwitch value={variant} onChange={onVariant} />
-          <p className="colours__note">Estos están en stock. ¿Otro color u otra combinación? Te lo hacemos.</p>
+          <p className="colours__note">Estos están en stock. ¿Otro color u otra combinación? Contáctanos.</p>
         </div>
       </div>
       <ul className="colours__tray" ref={tray}>
