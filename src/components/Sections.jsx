@@ -54,7 +54,7 @@ export function Colours({ variant, onVariant, onPreview }) {
           const c = COLORWAYS.find((x) => x.id === g.colorway);
           return (
           <li key={i} className="colour">
-            <TiltedCard className="colour__photo" src={img(g.photo, 800)} srcSet={srcSet(g.photo)} sizes="(min-width: 900px) 30vw, 80vw" alt={`Reposa ${model.name.toLowerCase()}, ${g.name.toLowerCase()}`} rotateAmplitude={6} />
+            <TiltedCard className="colour__photo" src={img(g.photo, 800)} srcSet={srcSet(g.photo)} sizes="(min-width: 900px) 30vw, 80vw" alt={`Soporte ${model.name.toLowerCase()}, ${g.name.toLowerCase()}`} rotateAmplitude={6} />
             <div className="colour__row">
               <h3 className="colour__name">
                 <span className="colour__chip" style={{ '--body': c.body, '--cap': c.cap }} aria-hidden="true" />

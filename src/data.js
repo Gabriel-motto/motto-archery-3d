@@ -17,8 +17,8 @@ export const HAS_CONTACT = Boolean(CONTACT.whatsapp || CONTACT.email || CONTACT.
 function orderMessage(colorName, modelName) {
   const model = modelName ? ` ${modelName.toLowerCase()}` : '';
   return colorName
-    ? `Hola, me interesa un reposa arcos Motto Archery${model} en ${colorName.toLowerCase()}.`
-    : `Hola, me interesa un reposa arcos Motto Archery${model}.`;
+    ? `Hola, me interesa un soporte para arcos compuestos Motto Archery${model} en ${colorName.toLowerCase()}.`
+    : `Hola, me interesa un soporte para arcos compuestos Motto Archery${model}.`;
 }
 
 /** Where an order button goes: WhatsApp or email with the colour already written; until then, the contact block. */
@@ -56,32 +56,32 @@ const SHOPS = { title: 'En tu tienda', text: 'Disponible en tiendas especializad
 
 export const DETAILS = {
   t: [
-    { id: 'celdas', ...TOUGH, photo: 'multicolor-apilados', alt: 'Reposa en T verde, azul, morado y rosa apilados' },
+    { id: 'celdas', ...TOUGH, photo: 'multicolor-apilados', alt: 'Soportes en T verde, azul, morado y rosa apilados' },
     {
       id: 'insertos',
       title: 'Cabezal en T',
       text: 'Especial para palas bífidas.',
       photo: 'negro-insertos-vertical',
-      alt: 'Reposa en T negros con insertos azul, verde, rojo y naranja',
+      alt: 'Soportes en T negros con insertos azul, verde, rojo y naranja',
     },
     {
       id: 'plegado', // grid slot name only
       title: '¿Uno especial?',
       text: 'Un color que no ves aquí, una combinación tuya: te lo hacemos.',
       photo: 'multicolor',
-      alt: 'Reposa en T verde, azul, morado y rosa',
+      alt: 'Soportes en T verde, azul, morado y rosa',
     },
-    { id: 'envase', ...BOXED, photo: 'rojo-envase', alt: 'Reposa en T rojo dentro de su envase de Motto Archery' },
-    { id: 'pedido', ...SHOPS, photo: 'neutros-apilados', alt: 'Reposa en T blanco, gris y negro apilados' },
+    { id: 'envase', ...BOXED, photo: 'rojo-envase', alt: 'Soporte en T rojo dentro de su envase de Motto Archery' },
+    { id: 'pedido', ...SHOPS, photo: 'neutros-apilados', alt: 'Soportes en T blanco, gris y negro apilados' },
   ],
   pinza: [
-    { id: 'celdas', ...TOUGH, photo: 'rojo-azul-verde', alt: 'Reposa con pinza rojo con su pata calada e insertos azul y verde' },
+    { id: 'celdas', ...TOUGH, photo: 'rojo-azul-verde', alt: 'Soporte con pinza rojo con su pata calada e insertos azul y verde' },
     {
       id: 'insertos',
       title: 'Cabezal con pinza',
       text: 'Diseño universal.',
       photo: 'amarillo-perfil',
-      alt: 'Reposa con pinza amarillos con las bandas negras del cabezal',
+      alt: 'Soportes con pinza amarillos con las bandas negras del cabezal',
     },
     {
       id: 'plegado', // grid slot name only
@@ -90,8 +90,8 @@ export const DETAILS = {
       photo: 'patas-neutras',
       alt: 'Patas articuladas blanca, gris y negra con su tornillo y el panel del logo',
     },
-    { id: 'envase', ...BOXED, photo: 'rojo-envase-tarjeta', alt: 'Reposa con pinza rojo en su envase con la tarjeta de Motto Archery' },
-    { id: 'pedido', ...SHOPS, photo: 'rojo-azul', alt: 'Reposa con pinza rojo con insertos azules y otro azul con insertos rojos' },
+    { id: 'envase', ...BOXED, photo: 'rojo-envase-tarjeta', alt: 'Soporte con pinza rojo en su envase con la tarjeta de Motto Archery' },
+    { id: 'pedido', ...SHOPS, photo: 'rojo-azul', alt: 'Soporte con pinza rojo con insertos azules y otro azul con insertos rojos' },
   ],
 };
 
@@ -122,7 +122,7 @@ export const STEPS = [
 export const FAQ = [
   { q: '¿Dónde lo compro?', a: 'En tiendas especializadas de tiro con arco, o escribiéndonos directamente.' },
   { q: '¿Puedo pedir un color especial?', a: 'Pregúntanos por disponibilidad de colores.' },
-  { q: '¿Para qué arcos sirve?', a: 'Para arcos de poleas. Nació para el de su creador.' },
+  { q: '¿Para qué arcos sirve?', a: 'Para arcos compuestos. Nació para el de su creador.' },
   {
     q: '¿Qué diferencia hay entre los dos modelos?',
     a: 'El modelo en T lleva una cabeza en T especial para palas bífidas. El modelo con pinza permite usarlo en todo tipo de arcos compuestos.',
