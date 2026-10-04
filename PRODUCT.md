@@ -12,11 +12,11 @@ Compound-bow archers — club and competition shooters who already own an expens
 
 ## Product Purpose
 
-Motto Archery makes a bow stand ("reposa arcos") for compound bows. It was designed by a long-time compound archer for his own bow; other competitors started asking for one, and it is now made to order by 3D printing in many colours (solid colours, two-tone, coloured inserts). The site's job is to make an archer want one and contact the maker to order it.
+Motto Archery makes a bow stand ("reposa arcos") for compound bows. It was designed by a long-time compound archer for his own bow; other competitors started asking for one, and it is 3D printed in many colours (solid colours, two-tone, coloured inserts); the colourways in the photos are in stock and sold through specialised archery shops, and custom colours are made on request. It does not fold. Two models: "en T" and "con pinza". The site's job is to make an archer want one and contact the maker to order it.
 
 ## Positioning
 
-Designed by a competitor rather than a catalogue accessory; made to order in the colour you choose rather than one stock finish.
+Designed by a competitor rather than a catalogue accessory; in stock at specialised shops, and made to your colours when you want something unique.
 
 ## Operating Context
 

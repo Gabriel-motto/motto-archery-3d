@@ -13,7 +13,7 @@ export function Details({ variant, onVariant }) {
     <section className="details" id="detalles" aria-labelledby="detalles-title">
       <div className="section-head">
         <h2 id="detalles-title" className="section-title">
-          Cortado a medida
+          Sin concesiones
         </h2>
         <VariantSwitch value={variant} onChange={onVariant} />
       </div>
@@ -42,11 +42,11 @@ export function Colours({ variant, onVariant, onPreview }) {
     <section className="colours" id="colores" aria-labelledby="colores-title">
       <div className="colours__head">
         <h2 id="colores-title" className="section-title">
-          Elige tu color
+          Tus colores
         </h2>
         <div className="colours__aside">
           <VariantSwitch value={variant} onChange={onVariant} />
-          <p className="colours__note">Cuerpo e inserto se imprimen por separado. Estas son algunas combinaciones ya hechas.</p>
+          <p className="colours__note">Estos están en stock. ¿Otro color u otra combinación? Te lo hacemos.</p>
         </div>
       </div>
       <ul className="colours__tray" ref={tray}>
@@ -82,7 +82,7 @@ export function Order({ colorway, variant }) {
           Pide el tuyo.
         </h2>
         <p className="order__lede">
-          Dinos el color y lo imprimimos para ti. Ahora mismo tienes elegido el modelo <strong>{model.name.toLowerCase()}</strong> en <strong>{current.name.toLowerCase()}</strong>.
+          Escríbenos o búscalo en tu tienda de tiro con arco. Tienes elegido el modelo <strong>{model.name.toLowerCase()}</strong> en <strong>{current.name.toLowerCase()}</strong>.
         </p>
         <ol className="steps">
           {STEPS.map((s) => (

@@ -80,9 +80,9 @@ export default function Hero({ colorway, onColorway, variant, onVariant }) {
 
       <header className="panel panel--hero" id="inicio" tabIndex={-1}>
         <div className="panel__copy">
-          <SplitText as="h1" className="hero__title" text="Nació en la línea de tiro." delay={0.15} />
+          <SplitText as="h1" className="hero__title" text="Tu arco no toca el suelo." delay={0.15} />
           <p className="hero__lede">
-            Reposa arcos para arcos de poleas, diseñado por un arquero de competición para su propio arco. Impreso en 3D bajo pedido, en tu color.
+            El reposa para arcos de poleas diseñado por un arquero de competición. Ligero, firme y en tus colores.
           </p>
           <VariantSwitch className="hero__switch" value={variant} onChange={onVariant} />
           <fieldset className="swatches">
@@ -106,7 +106,7 @@ export default function Hero({ colorway, onColorway, variant, onVariant }) {
               </a>
             </Magnet>
             <a className="btn btn--ghost" href="#colores">
-              Ver todos los colores
+              Ver colores
             </a>
           </div>
         </div>
@@ -121,7 +121,7 @@ export default function Hero({ colorway, onColorway, variant, onVariant }) {
       <section className="panel panel--story" id="origen" aria-labelledby="origen-title">
         <div className="panel__copy">
           <h2 id="origen-title" className="story__title">
-            Hecho por un arquero
+            Nacido en competición
           </h2>
           <ScrollReveal
             className="story__text"
@@ -129,16 +129,16 @@ export default function Hero({ colorway, onColorway, variant, onVariant }) {
             // finish while the panel settles: the text sits lower on phones
             end={() => (window.innerWidth < 760 ? 'top 72%' : 'top 42%')}
           >
-            No salió de un catálogo. Lo diseñó un arquero de poleas, después de muchos años compitiendo, para apoyar su propio arco entre tandas. Luego se lo pidieron los de su línea.
+            Nada de catálogo. Lo diseñó un arquero de poleas, con años de competición encima, para su propio arco. Los de su línea lo vieron y quisieron el suyo.
           </ScrollReveal>
-          <p className="story__note">Hoy cada reposa se sigue imprimiendo uno a uno, bajo pedido, en el color que eliges.</p>
+          <p className="story__note">Hoy está en tiendas especializadas. ¿Lo quieres único? Te lo hacemos.</p>
         </div>
       </section>
 
       <section className="panel panel--anatomy" aria-labelledby="pieza-title">
         <div className="panel__copy">
           <h2 id="pieza-title" className="anatomy__title">
-            Pieza a pieza
+            Sin nada de sobra
           </h2>
           {/* the readable version of the labels: shown on phones, for screen readers everywhere */}
           <ol className="anatomy__legend">

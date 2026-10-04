@@ -119,7 +119,7 @@ Para añadir una foto nueva, expórtala a WebP en 800 y 1600 px de ancho con ese
 
 - Contacto real (`CONTACT` en `data.js`). Hasta entonces los botones de pedido llevan a la sección de pedido.
 - Qué colores y combinaciones se pueden hacer, para el configurador cuerpo + inserto.
-- Confirmar que el modelo en T se pliega (el bento lo dice por el nombre de la foto).
+- Nombres o webs de las tiendas que lo venden (para una sección "Dónde comprarlo").
 - Precio, envío y plazos, si se quieren mostrar.
 - Nombre exacto de la fotógrafa para el crédito (ahora pone "Paula Marzoa").
 - Archivos 3D reales (STL/3MF) de los dos modelos, para sustituir los calcados de las fotos.

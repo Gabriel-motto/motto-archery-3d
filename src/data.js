@@ -48,88 +48,53 @@ export const VARIANTS = [
   { id: 'pinza', name: 'Con pinza' },
 ];
 
-// Bento per model. Facts the photos themselves show; nothing here is a spec
-// we were not given.
+// Bento per model. Only what the photos and the owner confirm: stock models,
+// sold in specialised shops, custom colours on request. It does not fold.
+const TOUGH = { title: 'Diseñado para resistir', text: 'Con un peso mínimo.' };
+const BOXED = { title: 'Llega en su envase', text: 'Listo para regalar o para la próxima tirada.' };
+const SHOPS = { title: 'En tu tienda', text: 'Disponible en tiendas especializadas de tiro con arco.' };
+
 export const DETAILS = {
   t: [
-    {
-      id: 'celdas',
-      title: 'Celdas triangulares',
-      text: 'La estructura calada quita material donde no trabaja y deja una pieza rígida y ligera de mover.',
-      photo: 'multicolor-apilados',
-      alt: 'Reposa en T verde, azul, morado y rosa apilados, con sus celdas triangulares',
-    },
+    { id: 'celdas', ...TOUGH, photo: 'multicolor-apilados', alt: 'Reposa en T verde, azul, morado y rosa apilados' },
     {
       id: 'insertos',
       title: 'Cabeza en T con inserto',
-      text: 'La pieza superior se imprime aparte: combínala con el cuerpo como quieras.',
+      text: 'Combina cuerpo y cabeza a tu gusto.',
       photo: 'negro-insertos-vertical',
       alt: 'Reposa en T negros con insertos azul, verde, rojo y naranja',
     },
     {
-      // "plegado" comes from the owner's photo names; confirm it folds before launch.
-      id: 'plegado',
-      title: 'Se pliega',
-      text: 'Abierto en la línea, recogido en la bolsa.',
-      photo: 'trio-neutro-plegado',
-      alt: 'Reposa en T blanco, gris y negro plegados',
+      id: 'plegado', // grid slot name only
+      title: '¿Uno especial?',
+      text: 'Un color que no ves aquí, una combinación tuya: te lo hacemos.',
+      photo: 'multicolor',
+      alt: 'Reposa en T verde, azul, morado y rosa',
     },
-    {
-      id: 'envase',
-      title: 'Llega en su envase',
-      text: 'Cada reposa sale preparado y con su marca, listo para regalar o para la próxima tirada.',
-      photo: 'rojo-envase',
-      alt: 'Reposa en T rojo dentro de su envase de Motto Archery',
-    },
-    {
-      id: 'pedido',
-      title: 'Impreso bajo pedido',
-      text: 'No hay estantería: cada unidad se imprime cuando la pides, en el color que eliges.',
-      photo: 'calidos',
-      alt: 'Reposa en T amarillo, naranja, rojo y rosa',
-    },
+    { id: 'envase', ...BOXED, photo: 'rojo-envase', alt: 'Reposa en T rojo dentro de su envase de Motto Archery' },
+    { id: 'pedido', ...SHOPS, photo: 'neutros-apilados', alt: 'Reposa en T blanco, gris y negro apilados' },
   ],
   pinza: [
-    {
-      id: 'celdas',
-      title: 'Celdas triangulares',
-      text: 'La pata fija es una celosía de triángulos: rígida donde trabaja, sin material donde no hace falta.',
-      photo: 'rojo-azul-verde',
-      alt: 'Reposa con pinza rojo con su pata de celdas triangulares e insertos azul y verde',
-    },
+    { id: 'celdas', ...TOUGH, photo: 'rojo-azul-verde', alt: 'Reposa con pinza rojo con su pata calada e insertos azul y verde' },
     {
       id: 'insertos',
       title: 'Cabezal con insertos',
-      text: 'Dos bandas de otro color recorren la zona de apoyo del cabezal.',
+      text: 'Dos bandas de color donde apoya el arco.',
       photo: 'amarillo-perfil',
       alt: 'Reposa con pinza amarillos con las bandas negras del cabezal',
     },
     {
-      id: 'plegado',
+      id: 'plegado', // grid slot name only
       title: 'Pata articulada',
-      text: 'La pata del logo gira sobre un tornillo junto al cabezal.',
+      text: 'Gira sobre su tornillo junto al cabezal.',
       photo: 'patas-neutras',
       alt: 'Patas articuladas blanca, gris y negra con su tornillo y el panel del logo',
     },
-    {
-      id: 'envase',
-      title: 'Llega en su envase',
-      text: 'Con su bolsa y su tarjeta de Motto Archery, listo para la próxima tirada.',
-      photo: 'rojo-envase-tarjeta',
-      alt: 'Reposa con pinza rojo en su envase con la tarjeta de Motto Archery',
-    },
-    {
-      id: 'pedido',
-      title: 'Impreso bajo pedido',
-      text: 'Cuerpo e insertos en los colores que elijas, impresos cuando haces el pedido.',
-      photo: 'rojo-azul',
-      alt: 'Reposa con pinza rojo con insertos azules y otro azul con insertos rojos',
-    },
+    { id: 'envase', ...BOXED, photo: 'rojo-envase-tarjeta', alt: 'Reposa con pinza rojo en su envase con la tarjeta de Motto Archery' },
+    { id: 'pedido', ...SHOPS, photo: 'rojo-azul', alt: 'Reposa con pinza rojo con insertos azules y otro azul con insertos rojos' },
   ],
 };
 
-// "Elige tu color" gallery per model: only photos where that model appears.
-// colorway: which hero colour the "Verlo en 3D" button applies.
 export const GALLERY = {
   t: [
     { photo: 'rojo-negro', name: 'Rojo y negro', colorway: 'rojo' },
@@ -148,45 +113,33 @@ export const GALLERY = {
 };
 
 export const STEPS = [
-  { title: 'Elige el color', text: 'Cuerpo e inserto, de los colores disponibles.' },
-  { title: 'Escríbenos', text: 'Nos cuentas cuál quieres y resolvemos tus dudas.' },
-  { title: 'Lo imprimimos', text: 'Se fabrica para ti y te lo preparamos.' },
+  { title: 'Elige modelo y color', text: 'De los que hay en stock.' },
+  { title: 'Escríbenos', text: 'Resolvemos tus dudas.' },
+  { title: '¿Especial?', text: 'Dinos colores y te lo hacemos.' },
 ];
 
-// Only questions whose answers we actually know; price, shipping, timing and
-// compatibility details must come from the owner.
+// Only answers we know; price, shipping and shop names come from the owner.
 export const FAQ = [
+  { q: '¿Dónde lo compro?', a: 'En tiendas especializadas de tiro con arco, o escribiéndonos directamente.' },
+  { q: '¿Puedo pedir un color especial?', a: 'Sí. Si no está entre los de stock, te lo hacemos.' },
+  { q: '¿Para qué arcos sirve?', a: 'Para arcos de poleas. Nació para el de su creador.' },
   {
-    q: '¿Para qué tipo de arco está pensado?',
-    a: 'Para arcos de poleas (compuestos). Nació precisamente para el arco de poleas de su creador.',
-  },
-  {
-    q: '¿Puedo elegir el color?',
-    a: 'Sí. Se imprime bajo pedido, así que puedes elegir el color del cuerpo y el del inserto superior entre los disponibles.',
-  },
-  {
-    q: '¿Cómo se fabrica?',
-    a: 'Mediante impresión 3D, unidad a unidad, cuando haces el pedido.',
-  },
-  {
-    q: '¿Cómo hago un pedido?',
-    a: 'Escríbenos con el color que quieres y te explicamos el resto del proceso.',
+    q: '¿Qué diferencia hay entre los dos modelos?',
+    a: 'El modelo en T lleva una cabeza en T con inserto de color. El modelo con pinza lleva un cabezal con dos bandas de inserto y una pata articulada.',
   },
 ];
 
-// Labels for the 3D anatomy, per model, in the order of the anchors in
-// Stand3D. Only what the photos show; no measurements until the owner gives them.
 export const ANATOMY = {
   t: [
-    { title: 'Cabeza en T con inserto', text: 'El inserto superior se imprime aparte, en otro color.' },
-    { title: 'Panel con la marca', text: 'Logo Motto Archery en relieve, en las dos caras.' },
-    { title: 'Celdas triangulares', text: 'Quitan material donde la pieza no trabaja.' },
-    { title: 'Dos patas en arco', text: 'Apoyo ancho y separado sobre el suelo.' },
+    { title: 'Cabeza en T', text: 'Inserto a contraste.' },
+    { title: 'Panel Motto Archery', text: 'Logo en relieve.' },
+    { title: 'Estructura en triángulos', text: 'Resistente, con el peso mínimo.' },
+    { title: 'Patas en arco', text: 'Base ancha, apoyo firme.' },
   ],
   pinza: [
-    { title: 'Cabezal con insertos', text: 'Dos bandas de color en la zona de apoyo.' },
-    { title: 'Pata articulada', text: 'Gira sobre un tornillo junto al cabezal.' },
-    { title: 'Celdas triangulares', text: 'La pata fija, calada en triángulos.' },
-    { title: 'Panel con la marca', text: 'Logo en relieve sobre panal hexagonal.' },
+    { title: 'Cabezal con insertos', text: 'Dos bandas donde apoya el arco.' },
+    { title: 'Pata articulada', text: 'Gira sobre su tornillo.' },
+    { title: 'Pata calada', text: 'Resistente, con el peso mínimo.' },
+    { title: 'Panel Motto Archery', text: 'Logo en relieve sobre panal.' },
   ],
 };
