@@ -179,6 +179,19 @@ main { overflow-x: clip; }
 .story__pin { position: sticky; top: 0; height: 100svh; z-index: 0; }
 .stand3d { position: absolute; inset: 0; animation: stand-in 1.2s var(--ease) both; }
 @keyframes stand-in { from { opacity: 0; } }
+/* the stand can be turned by hand in the hero: horizontal drags turn it,
+   vertical swipes still scroll the page (decided on the first move, Stand3D.jsx) */
+.stand3d { touch-action: pan-y pinch-zoom; }
+.stand3d.is-grab { cursor: grab; }
+.stand3d.is-grabbing { cursor: grabbing; }
+.stand3d__hint {
+  position: absolute; left: 0; top: 0; pointer-events: none; opacity: 0;
+  display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+  color: var(--bone-2); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase;
+  transition: opacity 0.5s var(--ease);
+}
+.stand3d__hint.is-on { opacity: 0.85; }
+@media (max-width: 759px) { .stand3d__hint { font-size: 12px; } }
 
 .panel {
   position: relative; z-index: 1; min-height: 100svh;
@@ -293,7 +306,10 @@ main { overflow-x: clip; }
   .hero__actions { margin-top: 20px; }
   .scroll-cue { display: none; }
 }
-@media (prefers-reduced-motion: reduce) { .stand3d, .scroll-cue svg { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .stand3d, .scroll-cue svg { animation: none; }
+  .stand3d__hint { transition: none; }
+}
 
 /* ── Details: a foam tray with cut-outs of different sizes ─── */
 .details { padding: clamp(96px, 12vw, 160px) var(--gutter); max-width: 1280px; margin: 0 auto; }

@@ -25,6 +25,8 @@ export default function Hero({ colorway, onColorway, variant, onVariant }) {
   const progress = useRef(0);
   // DOM nodes the 3D scene moves every frame (markers, leader lines, labels)
   const annot = useRef({ markers: [], lines: [], labels: [] });
+  // the hero copy, so the 3D scene can keep its drag hint clear of it on phones
+  const heroCopy = useRef(null);
   const reducedMotion = useReducedMotion();
   const finePointer = useFinePointer();
   const current = COLORWAYS.find((c) => c.id === colorway) ?? COLORWAYS[0];
@@ -56,6 +58,7 @@ export default function Hero({ colorway, onColorway, variant, onVariant }) {
             pose={POSE}
             eventSource={document.getElementById('root')}
             annot={annot}
+            heroCopy={heroCopy}
           />
         </Suspense>
         <div className="anatomy" aria-hidden="true">
@@ -79,7 +82,7 @@ export default function Hero({ colorway, onColorway, variant, onVariant }) {
       </div>
 
       <header className="panel panel--hero" id="inicio" tabIndex={-1}>
-        <div className="panel__copy">
+        <div className="panel__copy" ref={heroCopy}>
           <SplitText as="h1" className="hero__title" text="Tu arco con pisada firme." delay={0.15} />
           <p className="hero__lede">
             El soporte de arcos compuestos diseñado para la competición. Ligero, firme y preciso.

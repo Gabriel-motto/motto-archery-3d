@@ -5,8 +5,10 @@
 // stand: it starts on the right showing its front (stood on end, only its upper
 // half), turns to its other face while sliding left and panning to its lower
 // half for the story, then comes back whole to the centre for the anatomy labels.
-// Switching model runs a "print head" sweep (sweep.js). Loaded lazily.
-import { useEffect, useMemo, useRef, useState } from 'react';
+// Switching model runs a "print head" sweep (sweep.js). In the hero the visitor
+// can also turn the stand by hand (drag, with a flick of inertia); it eases back
+// to the scripted pose once the story starts. Loaded lazily.
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
 import { ContactShadows } from '@react-three/drei';
@@ -97,6 +99,15 @@ function poseAt(p, L) {
 // Reduced motion snaps between the resting places instead of travelling.
 const snap = (p) => (p < 0.17 ? 0 : p < 0.52 ? PHASE.aEnd : 0.8);
 
+// Drag to turn the stand, only while the page sits at the hero. Radians per
+// pixel dragged, the pitch limit, how fast a flick dies out after release
+// (per second, exponential) and how fast the stand goes back to its scripted
+// pose once the story starts. HERO_END is the scroll progress (≈ 40px) past
+// which the hero counts as left.
+const DRAG = { yaw: 0.0085, pitch: 0.006, pitchMax: 0.5, friction: 3.5, back: 4, slop: 6, pad: 16 };
+const HERO_END = 0.015;
+const wrapAngle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+
 // What each anatomy label points at, per model, in model units (see MODEL_W).
 const ANCHORS = {
   t: [
@@ -134,7 +145,7 @@ function PrintedModel({ gltf, mats }) {
   return <primitive object={root} />;
 }
 
-function Stand({ colorway, variant, reducedMotion, interactive, progress, pose, annot }) {
+function Stand({ colorway, variant, reducedMotion, interactive, progress, pose, annot, hitArea, hint, heroCopy }) {
   const travel = useRef(null);
   const turn = useRef(null);
   const shadow = useRef(null);
@@ -202,8 +213,131 @@ function Stand({ colorway, variant, reducedMotion, interactive, progress, pose, 
     camera.updateProjectionMatrix();
   }, [camera, layout]);
 
+  // The visitor's own turn of the stand (drag in the hero), added on top of the
+  // scripted pose. rect is the stand's screen box, refreshed every frame in the
+  // hero; it is the grab area (the panels' copy sits above the canvas and keeps
+  // its own clicks, see .panel / .panel__copy).
+  const user = useRef({ yaw: 0, pitch: 0, vYaw: 0, vPitch: 0, drag: null, back: false, touched: false, rect: null, hinted: false });
+  useEffect(() => {
+    const el = hitArea;
+    if (!el) return;
+    const u = user.current;
+    const inHero = () => progress.current <= HERO_END;
+    const overStand = (e) => {
+      const R = u.rect;
+      if (!R) return false;
+      const b = el.getBoundingClientRect();
+      const x = e.clientX - b.left;
+      const y = e.clientY - b.top;
+      return x >= R.x0 - DRAG.pad && x <= R.x1 + DRAG.pad && y >= R.y0 - DRAG.pad && y <= R.y1 + DRAG.pad;
+    };
+    const setCursor = (c) => {
+      el.classList.toggle('is-grab', c === 'grab');
+      el.classList.toggle('is-grabbing', c === 'grabbing');
+    };
+    const begin = (e) => {
+      const d = u.drag;
+      d.live = true;
+      d.x = e.clientX;
+      d.y = e.clientY;
+      d.t = e.timeStamp;
+      u.vYaw = u.vPitch = 0;
+      u.back = false;
+      u.touched = true;
+      u.hinted = true;
+      try {
+        el.setPointerCapture(e.pointerId);
+      } catch {
+        /* the pointer may already be gone */
+      }
+      setCursor('grabbing');
+      invalidate();
+    };
+    const end = (e, keepSpeed) => {
+      const d = u.drag;
+      if (!d || (e && e.pointerId !== d.id)) return;
+      // a flick keeps turning; a pause before letting go doesn't
+      if (!keepSpeed || reducedMotion || !e || e.timeStamp - d.t > 80) u.vYaw = u.vPitch = 0;
+      u.drag = null;
+      if (el.hasPointerCapture?.(d.id)) el.releasePointerCapture(d.id);
+      setCursor(e && e.pointerType === 'mouse' && inHero() && overStand(e) ? 'grab' : null);
+      invalidate();
+    };
+    u.end = end;
+
+    const onDown = (e) => {
+      if (u.drag || !e.isPrimary || e.button !== 0 || !inHero() || !overStand(e)) return;
+      u.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp, live: false };
+      if (e.pointerType === 'mouse') {
+        e.preventDefault(); // no text selection while dragging
+        begin(e);
+      }
+      // touch / pen: wait for the first move to tell a turn from a scroll
+    };
+    const onMove = (e) => {
+      const d = u.drag;
+      if (!d) {
+        if (e.pointerType === 'mouse') setCursor(inHero() && overStand(e) ? 'grab' : null);
+        return;
+      }
+      if (e.pointerId !== d.id) return;
+      if (!inHero()) return end(e, false);
+      if (!d.live) {
+        const dx = e.clientX - d.x;
+        const dy = e.clientY - d.y;
+        if (Math.hypot(dx, dy) < DRAG.slop) return;
+        // mostly vertical: it's a scroll, leave it to the page (touch-action: pan-y)
+        if (Math.abs(dy) > Math.abs(dx)) {
+          u.drag = null;
+          return;
+        }
+        begin(e);
+        return;
+      }
+      const dt = Math.max(e.timeStamp - d.t, 1) / 1000;
+      const dYaw = (e.clientX - d.x) * DRAG.yaw;
+      const pitch = THREE.MathUtils.clamp(u.pitch + (e.clientY - d.y) * DRAG.pitch, -DRAG.pitchMax, DRAG.pitchMax);
+      const dPitch = pitch - u.pitch;
+      u.yaw += dYaw;
+      u.pitch = pitch;
+      // speed for the flick after release, smoothed over the last few moves
+      u.vYaw = lerp(u.vYaw, THREE.MathUtils.clamp(dYaw / dt, -12, 12), 0.5);
+      u.vPitch = lerp(u.vPitch, THREE.MathUtils.clamp(dPitch / dt, -6, 6), 0.5);
+      d.x = e.clientX;
+      d.y = e.clientY;
+      d.t = e.timeStamp;
+      invalidate();
+    };
+    const onUp = (e) => end(e, true);
+    const onCancel = (e) => end(e, false);
+    const onLeave = (e) => {
+      if (!u.drag && e.pointerType === 'mouse') setCursor(null);
+    };
+
+    el.addEventListener('pointerdown', onDown);
+    el.addEventListener('pointermove', onMove);
+    el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointercancel', onCancel);
+    el.addEventListener('lostpointercapture', onCancel);
+    el.addEventListener('pointerleave', onLeave);
+    return () => {
+      el.removeEventListener('pointerdown', onDown);
+      el.removeEventListener('pointermove', onMove);
+      el.removeEventListener('pointerup', onUp);
+      el.removeEventListener('pointercancel', onCancel);
+      el.removeEventListener('lostpointercapture', onCancel);
+      el.removeEventListener('pointerleave', onLeave);
+      setCursor(null);
+      u.drag = null;
+      u.end = null;
+    };
+  }, [hitArea, progress, invalidate, reducedMotion]);
+
   const start = useRef(null);
   const smooth = useRef(progress.current);
+  const tilt = useRef(0); // the pointer parallax tilt
+  const parallax = useRef(1); // fades the parallax out while the visitor holds the stand
+  const hintShown = useRef(null);
 
   useFrame((state, delta) => {
     const g = travel.current;
@@ -231,12 +365,42 @@ function Stand({ colorway, variant, reducedMotion, interactive, progress, pose, 
     const px = interactive && !reducedMotion ? state.pointer.x : 0;
     const py = interactive && !reducedMotion ? state.pointer.y : 0;
 
+    // The visitor's turn: follows the pointer while held, coasts after a flick,
+    // and eases back to the scripted pose as soon as the story starts.
+    const u = user.current;
+    const hero = progress.current <= HERO_END;
+    if (!hero && (u.drag || u.yaw || u.pitch || u.vYaw || u.vPitch) && !u.back) {
+      if (u.drag) u.end?.(null, false);
+      u.back = true;
+      u.yaw = wrapAngle(u.yaw); // the short way round
+      u.vYaw = u.vPitch = 0;
+    }
+    if (u.back) {
+      u.yaw = reducedMotion ? 0 : THREE.MathUtils.damp(u.yaw, 0, DRAG.back, dt);
+      u.pitch = reducedMotion ? 0 : THREE.MathUtils.damp(u.pitch, 0, DRAG.back, dt);
+      if (Math.abs(u.yaw) < 1e-3 && Math.abs(u.pitch) < 1e-3) {
+        u.yaw = u.pitch = 0;
+        u.back = u.touched = false;
+      }
+    } else if (!u.drag?.live && (u.vYaw || u.vPitch)) {
+      u.yaw += u.vYaw * dt;
+      const pitch = THREE.MathUtils.clamp(u.pitch + u.vPitch * dt, -DRAG.pitchMax, DRAG.pitchMax);
+      if (pitch !== u.pitch + u.vPitch * dt) u.vPitch = 0;
+      u.pitch = pitch;
+      const decay = Math.exp(-DRAG.friction * dt);
+      u.vYaw = Math.abs(u.vYaw * decay) < 0.01 ? 0 : u.vYaw * decay;
+      u.vPitch = Math.abs(u.vPitch * decay) < 0.01 ? 0 : u.vPitch * decay;
+    }
+    parallax.current = THREE.MathUtils.damp(parallax.current, u.touched ? 0 : 1, 4, dt);
+    const pw = parallax.current;
+
     g.position.x = at.x;
     g.position.y = at.y + (1 - rise) * -1.2;
     g.scale.setScalar(at.s);
     // front (towards the hero copy) → back (towards the story) → front again for the anatomy
-    r.rotation.y = at.rot + (1 - rise) * -1 + px * 0.18;
-    r.rotation.x = THREE.MathUtils.damp(r.rotation.x, -py * 0.1, 4, dt);
+    r.rotation.y = at.rot + (1 - rise) * -1 + px * 0.18 * pw + u.yaw;
+    tilt.current = THREE.MathUtils.damp(tilt.current, -py * 0.1, 4, dt);
+    r.rotation.x = tilt.current * pw + u.pitch;
 
     // keep rendering only while something is still moving
     const busy =
@@ -244,13 +408,59 @@ function Stand({ colorway, variant, reducedMotion, interactive, progress, pose, 
       sweep.current ||
       Math.abs(smooth.current - target) > 1e-4 ||
       colourLeft > 1e-3 ||
-      Math.abs(r.rotation.x + py * 0.1) > 1e-4;
+      Math.abs(tilt.current + py * 0.1) > 1e-4 ||
+      Math.abs(pw - (u.touched ? 0 : 1)) > 1e-3 ||
+      u.back ||
+      u.vYaw ||
+      u.vPitch;
     if (busy) state.invalidate();
     if (shadow.current && layout.floor !== null) {
       shadow.current.position.x = g.position.x;
       shadow.current.position.y = layout.floor - 0.06;
     }
     g.updateMatrixWorld(true);
+
+    // In the hero: the stand's screen box (the grab area) and the drag hint under it.
+    const { width: W, height: H } = state.size;
+    if (hero) {
+      _box.setFromObject(r);
+      let x0 = Infinity;
+      let y0 = Infinity;
+      let x1 = -Infinity;
+      let y1 = -Infinity;
+      for (let i = 0; i < 8; i++) {
+        _v.set(i & 1 ? _box.max.x : _box.min.x, i & 2 ? _box.max.y : _box.min.y, i & 4 ? _box.max.z : _box.min.z).project(state.camera);
+        const sx = ((_v.x + 1) / 2) * W;
+        const sy = ((1 - _v.y) / 2) * H;
+        x0 = Math.min(x0, sx);
+        x1 = Math.max(x1, sx);
+        y0 = Math.min(y0, sy);
+        y1 = Math.max(y1, sy);
+      }
+      u.rect = { x0: Math.max(x0, 0), y0: Math.max(y0, 0), x1: Math.min(x1, W), y1: Math.min(y1, H) };
+    } else {
+      u.rect = null;
+    }
+    const tip = hint?.current;
+    if (tip) {
+      const show = hero && !u.hinted && rise > 0.9 && !!u.rect;
+      if (u.rect && !u.hinted) {
+        const copy = W < 760 && heroCopy?.current?.getBoundingClientRect();
+        if (copy) {
+          // phones: the copy runs under the stand, so the hint sits just above it, on its left edge
+          tip.style.transform = `translate(${copy.left}px, ${Math.max(copy.top - 32, 0)}px)`;
+        } else {
+          // centred under the stand, kept on screen (the vertical pose runs off the bottom)
+          const hx = THREE.MathUtils.clamp((u.rect.x0 + u.rect.x1) / 2, 90, W - 90);
+          const hy = Math.min(u.rect.y1 + 14, H - 84);
+          tip.style.transform = `translate(${hx}px, ${hy}px) translate(-50%, 0)`;
+        }
+      }
+      if (hintShown.current !== show) {
+        hintShown.current = show;
+        tip.classList.toggle('is-on', show);
+      }
+    }
 
     // The print-head sweep, bottom to top over the part of the stand on screen.
     const sw = sweep.current;
@@ -364,9 +574,16 @@ function StudioEnvironment() {
   return null;
 }
 
-export default function Stand3D({ colorway, variant, reducedMotion, interactive, progress, pose, eventSource, annot }) {
+export default function Stand3D({ colorway, variant, reducedMotion, interactive, progress, pose, eventSource, annot, heroCopy }) {
   const wrap = useRef(null);
+  const hint = useRef(null);
   const [visible, setVisible] = useState(true);
+  // the grab area, as state: the scene's effects run before this div's ref is set
+  const [area, setArea] = useState(null);
+  const wrapRef = useCallback((el) => {
+    wrap.current = el;
+    setArea(el);
+  }, []);
 
   // stop rendering while the story is scrolled away
   useEffect(() => {
@@ -376,7 +593,7 @@ export default function Stand3D({ colorway, variant, reducedMotion, interactive,
   }, []);
 
   return (
-    <div ref={wrap} className="stand3d">
+    <div ref={wrapRef} className="stand3d">
       <Canvas
         frameloop={visible ? 'demand' : 'never'}
         shadows
@@ -402,8 +619,18 @@ export default function Stand3D({ colorway, variant, reducedMotion, interactive,
           progress={progress}
           pose={pose}
           annot={annot}
+          hitArea={area}
+          hint={hint}
+          heroCopy={heroCopy}
         />
       </Canvas>
+      {/* shown under the stand in the hero until the first drag */}
+      <span className="stand3d__hint" ref={hint} aria-hidden="true">
+        <svg viewBox="0 0 20 12" width="20" height="12">
+          <path d="M5 2 1 6l4 4M15 2l4 4-4 4M1 6h18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Arrastra para girar
+      </span>
     </div>
   );
 }
