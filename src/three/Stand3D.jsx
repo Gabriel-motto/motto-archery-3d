@@ -1,98 +1,45 @@
 // Real-time 3D stand for the scroll story at the top of the page. Both models
-// (en T and con pinza) are extruded from the silhouettes traced in
-// standShape.js and lit by one top-left key light. Scroll drives the stand: it
-// starts on the right showing its front (stood on end, only its upper half),
-// turns to its other face while sliding left and panning to its lower half for
-// the story, then comes back whole to the centre for the anatomy labels.
+// (en T and con pinza) are the real print files, converted from the Fusion 360
+// 3MF exports to compressed GLBs (public/models, see scripts/models) with one
+// node per printed body, and lit by one top-left key light. Scroll drives the
+// stand: it starts on the right showing its front (stood on end, only its upper
+// half), turns to its other face while sliding left and panning to its lower
+// half for the story, then comes back whole to the centre for the anatomy labels.
 // Switching model runs a "print head" sweep (sweep.js). Loaded lazily.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
 import { ContactShadows } from '@react-three/drei';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { asset } from '../data.js';
-import {
-  FOV,
-  PINZA_INSERT_TOP,
-  PINZA_PIVOT,
-  STAND_DROP,
-  bodyOutline,
-  capOutline,
-  cells,
-  panelFrame,
-  panelOutline,
-  pinzaBodyOutline,
-  pinzaCells,
-  pinzaLegOutline,
-  pinzaLegPanelFrame,
-  pinzaLegPanelOutline,
-  pinzaStripOutline,
-  roundedPath,
-} from './standShape.js';
 import { applySweep, makeSweep } from './sweep.js';
 
-const S = 0.01; // photo pixels → scene units
-const DEPTH = 34;
-const BEVEL = 5;
-const FACE = DEPTH / 2 + BEVEL; // z of the body's front face
-const LEG_DEPTH = 24;
-const LEG_Z = FACE + 3 + LEG_DEPTH / 2 + BEVEL; // the pinza's pivoting leg sits in front of the body
-const LEG_FACE = LEG_Z + LEG_DEPTH / 2 + BEVEL;
-const LEG_BACK = LEG_Z - LEG_DEPTH / 2 - BEVEL;
+// Vertical field of view of the camera, in degrees.
+const FOV = 30;
 const TAN = Math.tan(((FOV / 2) * Math.PI) / 180);
-const MODEL_W = 6.3;
-const MODEL_H = 2.8;
+// The models are 283 × 140 × 41 mm, exported at 1 unit = 50 mm and centred on
+// the origin: 5.67 × 2.8 units. Layout sizes keep a little air around them.
+const MODEL_W = 5.9;
+const MODEL_H = 2.9;
 const SWEEP_SECONDS = 1.7;
 
-function toShape(pts, radius, holes = []) {
-  const shape = new THREE.Shape();
-  roundedPath(pts, radius, shape);
-  for (const h of holes) {
-    const path = new THREE.Path();
-    roundedPath(h, 7, path);
-    shape.holes.push(path);
-  }
-  return shape;
-}
+const MODEL_URLS = [asset('models/motto-t.glb'), asset('models/motto-pinza.glb')];
+const withMeshopt = (loader) => loader.setMeshoptDecoder(MeshoptDecoder);
 
-const extrude = (shape, depth, bevel) =>
-  new THREE.ExtrudeGeometry(shape, {
-    depth,
-    bevelEnabled: true,
-    bevelThickness: bevel,
-    bevelSize: bevel * 0.8,
-    bevelSegments: 4,
-    curveSegments: 8,
-  }).translate(0, 0, -depth / 2);
-
-function useGeometry() {
-  return useMemo(
-    () => ({
-      t: {
-        body: extrude(toShape(bodyOutline(), 10, cells()), DEPTH, BEVEL),
-        cap: extrude(toShape(capOutline(), 5), DEPTH + 2, BEVEL),
-        panel: extrude(toShape(panelOutline(), 10), 1.5, 1),
-      },
-      pinza: {
-        body: extrude(toShape(pinzaBodyOutline(), 10, pinzaCells()), DEPTH, BEVEL),
-        strip: extrude(toShape(pinzaStripOutline(), 4), DEPTH / 2 - 6, 2),
-        leg: extrude(toShape(pinzaLegOutline(), 9), LEG_DEPTH, BEVEL),
-        panel: extrude(toShape(pinzaLegPanelOutline(), 10), 1.5, 1),
-        screw: new THREE.CylinderGeometry(9, 9, LEG_FACE + FACE + 4, 24).rotateX(Math.PI / 2),
-        screwHead: new THREE.CylinderGeometry(15, 15, 5, 6).rotateX(Math.PI / 2),
-      },
-    }),
-    []
-  );
-}
-
+// Every mesh in the GLBs carries a role (glTF extras → userData.role):
+// body   the printed frame and the pivoting leg        → colourway body colour
+// cap    T-head inserts, clamp slot insert, foot pads,
+//        and the raised MOTTO ARCHERY lettering          → colourway cap colour
+// metal  pivot screw, washer and nut
+// dark   the small plug at the top of the head
 function makeMaterials(uniforms) {
   return {
     body: applySweep(new THREE.MeshPhysicalMaterial({ roughness: 0.5, clearcoat: 0.25, clearcoatRoughness: 0.6 }), uniforms),
     cap: applySweep(new THREE.MeshPhysicalMaterial({ roughness: 0.55, clearcoat: 0.2, clearcoatRoughness: 0.6 }), uniforms),
-    panel: applySweep(new THREE.MeshStandardMaterial({ roughness: 0.75 }), uniforms),
-    logo: applySweep(new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.92, toneMapped: false }), uniforms),
     metal: applySweep(new THREE.MeshStandardMaterial({ color: '#dcdee2', metalness: 0.8, roughness: 0.28 }), uniforms),
+    dark: applySweep(new THREE.MeshStandardMaterial({ color: '#1b1b1c', roughness: 0.6 }), uniforms),
   };
 }
 
@@ -150,21 +97,19 @@ function poseAt(p, L) {
 // Reduced motion snaps between the resting places instead of travelling.
 const snap = (p) => (p < 0.17 ? 0 : p < 0.52 ? PHASE.aEnd : 0.8);
 
-const centroid = (tri) => [(tri[0][0] + tri[1][0] + tri[2][0]) / 3, (tri[0][1] + tri[1][1] + tri[2][1]) / 3];
-
-// What each anatomy label points at, per model, in outline coordinates + z.
+// What each anatomy label points at, per model, in model units (see MODEL_W).
 const ANCHORS = {
   t: [
-    [0, 266, FACE + 2], // T head + insert
-    [...panelFrame().center, FACE + 2], // logo panel
-    [...centroid(cells()[1]), FACE + 2], // a leg cell
-    [-268, 10, FACE + 2], // foot
+    [0, 1.22, 0.38], // T head + inserts
+    [1.59, -0.53, 0.18], // logo panel
+    [-1.55, -0.66, 0.3], // a leg cell
+    [-2.62, -1.3, 0.3], // foot
   ],
   pinza: [
-    [PINZA_INSERT_TOP[0], PINZA_INSERT_TOP[1], FACE], // insert strips
-    [PINZA_PIVOT[0], PINZA_PIVOT[1], LEG_FACE + 4], // pivot screw
-    [...centroid(pinzaCells()[1]), FACE + 2], // a leg cell
-    [...pinzaLegPanelFrame().center, LEG_FACE + 2], // logo panel
+    [-0.2, 1.05, 0.44], // slot insert
+    [0.61, 0.48, 0.45], // pivot screw
+    [-1.55, -0.66, 0.3], // a leg cell
+    [1.62, -0.57, 0.18], // logo panel
   ],
 };
 const ANCHOR_VECTORS = Object.fromEntries(Object.entries(ANCHORS).map(([k, list]) => [k, list.map((a) => new THREE.Vector3(...a))]));
@@ -173,52 +118,20 @@ const _v = new THREE.Vector3();
 const _c = new THREE.Vector3();
 const _box = new THREE.Box3();
 
-function TModel({ geo, mats }) {
-  const f = panelFrame();
-  const w = f.length * 0.86;
-  return (
-    <>
-      <mesh geometry={geo.body} material={mats.body} castShadow receiveShadow />
-      <mesh geometry={geo.cap} material={mats.cap} castShadow />
-      <mesh geometry={geo.panel} material={mats.panel} position={[0, 0, FACE - 0.6]} />
-      <mesh geometry={geo.panel} material={mats.panel} position={[0, 0, -FACE - 0.9]} />
-      <mesh material={mats.logo} position={[f.center[0], f.center[1], FACE + 2]} rotation={[0, 0, f.angle]}>
-        <planeGeometry args={[w, w * (358 / 1201)]} />
-      </mesh>
-      <mesh material={mats.logo} position={[f.center[0], f.center[1], -FACE - 3.6]} rotation={[0, Math.PI, -f.angle]}>
-        <planeGeometry args={[w, w * (358 / 1201)]} />
-      </mesh>
-    </>
-  );
-}
-
-function PinzaModel({ geo, mats }) {
-  const f = pinzaLegPanelFrame();
-  const w = f.length * 0.86;
-  const [px, py] = PINZA_PIVOT;
-  const stripZ = DEPTH / 4 + 1;
-  return (
-    <>
-      <mesh geometry={geo.body} material={mats.body} castShadow receiveShadow />
-      {/* two insert strips side by side along the top of the head */}
-      <mesh geometry={geo.strip} material={mats.cap} position={[0, 0, stripZ]} castShadow />
-      <mesh geometry={geo.strip} material={mats.cap} position={[0, 0, -stripZ]} castShadow />
-      {/* the pivoting leg, in front of the body */}
-      <mesh geometry={geo.leg} material={mats.body} position={[0, 0, LEG_Z]} castShadow receiveShadow />
-      <mesh geometry={geo.panel} material={mats.panel} position={[0, 0, LEG_FACE - 0.6]} />
-      <mesh geometry={geo.panel} material={mats.panel} position={[0, 0, LEG_BACK - 0.9]} />
-      <mesh material={mats.logo} position={[f.center[0], f.center[1], LEG_FACE + 2]} rotation={[0, 0, f.angle]}>
-        <planeGeometry args={[w, w * (358 / 1201)]} />
-      </mesh>
-      <mesh material={mats.logo} position={[f.center[0], f.center[1], LEG_BACK - 3.6]} rotation={[0, Math.PI, -f.angle]}>
-        <planeGeometry args={[w, w * (358 / 1201)]} />
-      </mesh>
-      {/* the screw it pivots on */}
-      <mesh geometry={geo.screw} material={mats.metal} position={[px, py, (LEG_FACE - FACE) / 2]} />
-      <mesh geometry={geo.screwHead} material={mats.metal} position={[px, py, LEG_FACE + 2]} />
-      <mesh geometry={geo.screwHead} material={mats.metal} position={[px, py, -FACE - 2]} />
-    </>
-  );
+/** One loaded print file, its meshes dressed in the model's materials by role. */
+function PrintedModel({ gltf, mats }) {
+  const root = useMemo(() => {
+    const scene = gltf.scene.clone(true);
+    scene.traverse((o) => {
+      if (!o.isMesh) return;
+      const role = o.userData.role in mats ? o.userData.role : 'body';
+      o.material = mats[role];
+      o.castShadow = true;
+      o.receiveShadow = role === 'body';
+    });
+    return scene;
+  }, [gltf, mats]);
+  return <primitive object={root} />;
 }
 
 function Stand({ colorway, variant, reducedMotion, interactive, progress, pose, annot }) {
@@ -227,15 +140,10 @@ function Stand({ colorway, variant, reducedMotion, interactive, progress, pose, 
   const shadow = useRef(null);
   const groups = { t: useRef(null), pinza: useRef(null) };
   const models = { t: useRef(null), pinza: useRef(null) };
-  const geo = useGeometry();
+  const [gltfT, gltfPinza] = useLoader(GLTFLoader, MODEL_URLS, withMeshopt);
   const size = useThree((s) => s.size);
   const camera = useThree((s) => s.camera);
   const layout = useMemo(() => layoutFor(size, pose), [size, pose]);
-  const [logoDark, logoLight] = useLoader(THREE.TextureLoader, [asset('img/logo-horizontal-negro.png'), asset('img/logo-horizontal-blanco.png')]);
-  const logos = useMemo(() => {
-    for (const t of [logoDark, logoLight]) t.colorSpace = THREE.SRGBColorSpace;
-    return { dark: logoDark, light: logoLight };
-  }, [logoDark, logoLight]);
   const invalidate = useThree((s) => s.invalidate);
 
   const sweeps = useMemo(() => ({ t: makeSweep(), pinza: makeSweep() }), []);
@@ -246,17 +154,14 @@ function Stand({ colorway, variant, reducedMotion, interactive, progress, pose, 
   const next = {
     body: new THREE.Color(colorway.body),
     cap: new THREE.Color(colorway.cap),
-    panel: new THREE.Color(colorway.body).multiplyScalar(0.82),
   };
   if (!targets.current) {
     for (const m of Object.values(mats)) {
       m.body.color.copy(next.body);
       m.cap.color.copy(next.cap);
-      m.panel.color.copy(next.panel);
     }
   }
   targets.current = next;
-  for (const m of Object.values(mats)) m.logo.map = colorway.logo === 'light' ? logos.light : logos.dark;
 
   // model switch: which one is showing, and the sweep in progress
   const active = useRef(variant);
@@ -310,7 +215,6 @@ function Stand({ colorway, variant, reducedMotion, interactive, progress, pose, 
     for (const m of Object.values(mats)) {
       m.body.color.lerp(targets.current.body, k);
       m.cap.color.lerp(targets.current.cap, k);
-      m.panel.color.lerp(targets.current.panel, k);
       colourLeft += Math.abs(m.body.color.r - targets.current.body.r) + Math.abs(m.cap.color.g - targets.current.cap.g);
     }
 
@@ -418,13 +322,13 @@ function Stand({ colorway, variant, reducedMotion, interactive, progress, pose, 
           {/* vertical pose: stood on end, the head pointing at the text */}
           <group rotation={[0, 0, pose === 'vertical' ? Math.PI / 2 : 0]}>
             <group ref={groups.t} visible={initial === 't'}>
-              <group ref={models.t} scale={S} position={[0, -STAND_DROP, 0]}>
-                <TModel geo={geo.t} mats={mats.t} />
+              <group ref={models.t}>
+                <PrintedModel gltf={gltfT} mats={mats.t} />
               </group>
             </group>
             <group ref={groups.pinza} visible={initial === 'pinza'}>
-              <group ref={models.pinza} scale={S} position={[0, -STAND_DROP, -0.2]}>
-                <PinzaModel geo={geo.pinza} mats={mats.pinza} />
+              <group ref={models.pinza}>
+                <PrintedModel gltf={gltfPinza} mats={mats.pinza} />
               </group>
             </group>
           </group>

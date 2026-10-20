@@ -1,0 +1,13 @@
+{
+  "name": "motto-t",
+  "source": "MOTTO Archery TWIST WEB.3mf",
+  "scale": 0.02,
+  "origin": [0, 19.5, -21.65],
+  "crease": 40,
+  "parts": {
+    "0": { "name": "insert_right", "role": "cap" },
+    "1": { "name": "insert_left", "role": "cap" },
+    "2": { "name": "plug", "role": "dark" },
+    "3": { "name": "frame", "role": "body", "logo": { "sides": [1, -1], "name": "logo", "role": "cap" } }
+  }
+}

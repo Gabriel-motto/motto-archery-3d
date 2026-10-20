@@ -30,15 +30,15 @@ export function orderHref(colorName, modelName) {
 }
 
 // Colourways seen in the product photos — which ones are sold is still to be
-// confirmed with the owner. body/cap drive the 3D model, logo picks the
-// wordmark that reads on that body colour.
+// confirmed with the owner. body colours the printed frame (and the clamp's
+// leg); cap colours the inserts, foot pads and the raised MOTTO ARCHERY lettering.
 export const COLORWAYS = [
-  { id: 'rojo', name: 'Rojo y negro', body: '#d1191b', cap: '#151515', logo: 'dark', photo: 'rojo-negro' },
-  { id: 'negro', name: 'Negro y rojo', body: '#1b1b1c', cap: '#d1191b', logo: 'light', photo: 'negro-rojo' },
-  { id: 'blanco', name: 'Blanco', body: '#e9e7e2', cap: '#8d8f93', logo: 'dark', photo: 'trio-neutro' },
-  { id: 'amarillo', name: 'Amarillo', body: '#f2bf0a', cap: '#151515', logo: 'dark', photo: 'amarillo' },
-  { id: 'azul', name: 'Azul y turquesa', body: '#1f6fd1', cap: '#19b3b0', logo: 'light', photo: 'azul-turquesa' },
-  { id: 'rosa', name: 'Rosa y morado', body: '#e57fb0', cap: '#7c4bc0', logo: 'dark', photo: 'rosa-morado' },
+  { id: 'rojo', name: 'Rojo y negro', body: '#d1191b', cap: '#151515', photo: 'rojo-negro' },
+  { id: 'negro', name: 'Negro y rojo', body: '#1b1b1c', cap: '#d1191b', photo: 'negro-rojo' },
+  { id: 'blanco', name: 'Blanco', body: '#e9e7e2', cap: '#8d8f93', photo: 'trio-neutro' },
+  { id: 'amarillo', name: 'Amarillo', body: '#f2bf0a', cap: '#151515', photo: 'amarillo' },
+  { id: 'azul', name: 'Azul y turquesa', body: '#1f6fd1', cap: '#19b3b0', photo: 'azul-turquesa' },
+  { id: 'rosa', name: 'Rosa y morado', body: '#e57fb0', cap: '#7c4bc0', photo: 'rosa-morado' },
 ];
 
 // The two models, told apart in the photos: the T head with its top insert,
