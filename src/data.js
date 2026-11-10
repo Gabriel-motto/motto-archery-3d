@@ -9,7 +9,7 @@ export const srcSet = (slug) => `${img(slug, 800)} 800w, ${img(slug)} 1600w`;
 export const CONTACT = {
   whatsapp: '', // formato internacional sin "+" ni espacios, p. ej. '34600111222'
   email: '', // p. ej. 'pedidos@mottoarchery.com'
-  instagram: '', // usuario sin "@", p. ej. 'mottoarchery'
+  instagram: 'motto.archery', // usuario sin "@", p. ej. 'mottoarchery'
 };
 
 export const HAS_CONTACT = Boolean(CONTACT.whatsapp || CONTACT.email || CONTACT.instagram);
@@ -26,6 +26,7 @@ export function orderHref(colorName, modelName) {
   const msg = encodeURIComponent(orderMessage(colorName, modelName));
   if (CONTACT.whatsapp) return `https://wa.me/${CONTACT.whatsapp}?text=${msg}`;
   if (CONTACT.email) return `mailto:${CONTACT.email}?subject=${encodeURIComponent('Pedido Motto Archery')}&body=${msg}`;
+  if (CONTACT.instagram) return `https://ig.me/m/${CONTACT.instagram}`; // opens a DM; Instagram can't prefill text
   return '#pedido';
 }
 
